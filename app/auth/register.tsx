@@ -1,7 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { useState } from 'react';
 import {
+    ActivityIndicator,
+    Alert,
     KeyboardAvoidingView,
     Platform,
     SafeAreaView,
@@ -12,6 +15,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { auth } from '../../firebaseConfig';
 
 export default function RegisterScreen() {
   const [fullName, setFullName] = useState('');
@@ -19,10 +23,65 @@ export default function RegisterScreen() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    // Handle registration logic
-    router.replace('/(tabs)');
+    // Validações
+    if (!fullName.trim()) {
+      Alert.alert('Erro', 'Por favor, insira seu nome completo.');
+      return;
+    }
+    if (!email.trim()) {
+      Alert.alert('Erro', 'Por favor, insira seu email.');
+      return;
+    }
+    if (!password) {
+      Alert.alert('Erro', 'Por favor, insira uma senha.');
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('Erro', 'As senhas não coincidem.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Criar usuário no Firebase
+      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      
+      // Atualizar o perfil com o nome
+      await updateProfile(userCredential.user, {
+        displayName: fullName.trim(),
+      });
+
+      // Registro bem-sucedido, navegar para a tela principal
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      let errorMessage = 'Ocorreu um erro ao criar sua conta.';
+      
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = 'Este email já está em uso.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Email inválido.';
+          break;
+        case 'auth/weak-password':
+          errorMessage = 'A senha é muito fraca.';
+          break;
+        case 'auth/operation-not-allowed':
+          errorMessage = 'Operação não permitida.';
+          break;
+      }
+      
+      Alert.alert('Erro', errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -119,11 +178,16 @@ export default function RegisterScreen() {
 
             {/* Register Button */}
             <TouchableOpacity
-              style={styles.registerButton}
+              style={[styles.registerButton, loading && styles.registerButtonDisabled]}
               onPress={handleRegister}
               activeOpacity={0.8}
+              disabled={loading}
             >
-              <Text style={styles.registerButtonText}>Criar conta</Text>
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.registerButtonText}>Criar conta</Text>
+              )}
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -194,6 +258,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 16,
+  },
+  registerButtonDisabled: {
+    opacity: 0.7,
   },
   registerButtonText: {
     fontSize: 18,
