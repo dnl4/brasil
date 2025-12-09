@@ -1,11 +1,11 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-} from 'react-native';
 import { router } from 'expo-router';
+import {
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 export default function WelcomeScreen() {
   const userName = 'Danilo'; // This would come from user data/context
