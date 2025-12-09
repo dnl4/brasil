@@ -1,4 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react-native';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -62,7 +63,7 @@ export default function LoginScreen() {
               style={styles.backButton}
               onPress={() => router.back()}
             >
-              <Ionicons name="chevron-back" size={28} color="#000" />
+              <HugeiconsIcon icon={ArrowLeft01Icon} size={28} color="#000" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Login</Text>
             <View style={styles.headerSpacer} />
