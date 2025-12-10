@@ -1,25 +1,62 @@
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Redirect, Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SnackbarProvider } from 'flix-component/packages/snackbar/src';
+import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
+import { AuthProvider, useAuth } from '../contexts/auth-context';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
+function RootLayoutNav() {
+  const { user, isLoading } = useAuth();
+  const segments = useSegments();
+
+  // Mostra loading enquanto verifica autenticação
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#006e1c" />
+      </View>
+    );
+  }
+
+  // Verifica se o usuário está em uma rota protegida (tabs)
+  const inTabsGroup = segments[0] === '(tabs)';
+
+  // Se não está autenticado e está tentando acessar tabs, redireciona para welcome
+  if (!user && inTabsGroup) {
+    return <Redirect href="/auth/welcome" />;
+  }
+
+  // Se está autenticado e está em uma rota de auth, redireciona para tabs
+  if (user && segments[0] === 'auth') {
+    return <Redirect href="/(tabs)" />;
+  }
+
+  return (
+    <>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/welcome" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/register" options={{ headerShown: false }} />
+      </Stack>
+      <StatusBar style="dark" />
+    </>
+  );
+}
+
 export default function RootLayout() {
   return (
     <SnackbarProvider>
-      <ThemeProvider value={DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="auth/welcome" options={{ headerShown: false }} />
-          <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-          <Stack.Screen name="auth/register" options={{ headerShown: false }} />
-        </Stack>
-        <StatusBar style="dark" />
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider value={DefaultTheme}>
+          <RootLayoutNav />
+        </ThemeProvider>
+      </AuthProvider>
     </SnackbarProvider>
   );
 }
