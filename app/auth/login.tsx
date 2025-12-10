@@ -1,40 +1,73 @@
 import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { router } from 'expo-router';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useSnackbar } from 'flix-component/packages/snackbar/src';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { InputField } from '../../components/ui/input-field';
+import { PrimaryButton } from '../../components/ui/primary-button';
+import { auth } from '../../firebaseConfig';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const { show } = useSnackbar();
 
   const handleLogin = async () => {
-    setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      setShowSuccessModal(true);
-    }, 2000);
-  };
+    // Validações
+    if (!email.trim()) {
+      show('Por favor, insira seu email.', { backgroundColor: '#ba1a1a' });
+      return;
+    }
+    if (!password) {
+      show('Por favor, insira sua senha.', { backgroundColor: '#ba1a1a' });
+      return;
+    }
 
-  const handleSuccessModalClose = () => {
-    setShowSuccessModal(false);
-    router.replace('/(tabs)');
+    setIsLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      show('Login realizado com sucesso!', { backgroundColor: '#006e1c' });
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      let errorMessage = 'Ocorreu um erro ao fazer login.';
+
+      switch (error.code) {
+        case 'auth/invalid-email':
+          errorMessage = 'Email inválido.';
+          break;
+        case 'auth/user-disabled':
+          errorMessage = 'Esta conta foi desativada.';
+          break;
+        case 'auth/user-not-found':
+          errorMessage = 'Usuário não encontrado.';
+          break;
+        case 'auth/wrong-password':
+          errorMessage = 'Senha incorreta.';
+          break;
+        case 'auth/invalid-credential':
+          errorMessage = 'Email ou senha incorretos.';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Muitas tentativas. Tente novamente mais tarde.';
+          break;
+      }
+
+      show(errorMessage, { backgroundColor: '#ba1a1a' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleForgotPassword = () => {
@@ -72,52 +105,31 @@ export default function LoginScreen() {
           {/* Form */}
           <View style={styles.form}>
             {/* Email Field */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="seu@email.com"
-                placeholderTextColor="#999"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
+            <InputField
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="seu@email.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
 
             {/* Password Field */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Senha</Text>
-              <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="••••••••"
-                placeholderTextColor="#999"
-                secureTextEntry
-              />
-            </View>
+            <InputField
+              label="Senha"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="••••••••"
+              secureTextEntry
+            />
 
             {/* Login Button */}
-            <TouchableOpacity
-              style={[
-                styles.loginButton,
-                isLoading && styles.loginButtonLoading,
-              ]}
+            <PrimaryButton
+              title="Entrar"
               onPress={handleLogin}
-              disabled={isLoading}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.loginButtonText}>Entrar</Text>
-              {isLoading && (
-                <ActivityIndicator
-                  size="small"
-                  color="#fff"
-                  style={styles.loader}
-                />
-              )}
-            </TouchableOpacity>
+              loading={isLoading}
+            />
 
             {/* Forgot Password Link */}
             <TouchableOpacity
@@ -137,28 +149,6 @@ export default function LoginScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      {/* Success Modal */}
-      <Modal
-        visible={showSuccessModal}
-        transparent
-        animationType="fade"
-        onRequestClose={handleSuccessModalClose}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Bem-vindo!</Text>
-            <Text style={styles.modalMessage}>Login realizado com sucesso.</Text>
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={handleSuccessModalClose}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.modalButtonText}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -199,45 +189,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 24,
   },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#000',
-    marginBottom: 8,
-  },
-  input: {
-    height: 56,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: '#000',
-    backgroundColor: '#fff',
-  },
-  loginButton: {
-    height: 56,
-    backgroundColor: '#1C1C1E',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginTop: 16,
-  },
-  loginButtonLoading: {
-    backgroundColor: '#6B6B6D',
-  },
-  loginButtonText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  loader: {
-    marginLeft: 10,
-  },
   linkContainer: {
     alignItems: 'center',
     marginTop: 20,
@@ -246,47 +197,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#007AFF',
     fontWeight: '400',
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    paddingVertical: 32,
-    paddingHorizontal: 24,
-    width: '100%',
-    maxWidth: 340,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 12,
-  },
-  modalMessage: {
-    fontSize: 16,
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  modalButton: {
-    height: 56,
-    backgroundColor: '#1C1C1E',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-  },
-  modalButtonText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
   },
 });

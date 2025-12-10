@@ -1,20 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { useSnackbar } from 'flix-component/packages/snackbar/src';
 import { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
     KeyboardAvoidingView,
     Platform,
     SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
+import { InputField } from '../../components/ui/input-field';
+import { PrimaryButton } from '../../components/ui/primary-button';
 import { auth } from '../../firebaseConfig';
 
 export default function RegisterScreen() {
@@ -24,27 +24,28 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { show } = useSnackbar();
 
   const handleRegister = async () => {
     // Validações
     if (!fullName.trim()) {
-      Alert.alert('Erro', 'Por favor, insira seu nome completo.');
+      show('Por favor, insira seu nome completo.', { backgroundColor: '#ba1a1a' });
       return;
     }
     if (!email.trim()) {
-      Alert.alert('Erro', 'Por favor, insira seu email.');
+      show('Por favor, insira seu email.', { backgroundColor: '#ba1a1a' });
       return;
     }
     if (!password) {
-      Alert.alert('Erro', 'Por favor, insira uma senha.');
+      show('Por favor, insira uma senha.', { backgroundColor: '#ba1a1a' });
       return;
     }
     if (password.length < 6) {
-      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres.');
+      show('A senha deve ter pelo menos 6 caracteres.', { backgroundColor: '#ba1a1a' });
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('Erro', 'As senhas não coincidem.');
+      show('As senhas não coincidem.', { backgroundColor: '#ba1a1a' });
       return;
     }
 
@@ -78,7 +79,7 @@ export default function RegisterScreen() {
           break;
       }
       
-      Alert.alert('Erro', errorMessage);
+      show(errorMessage, { backgroundColor: '#ba1a1a' });
     } finally {
       setLoading(false);
     }
@@ -109,86 +110,59 @@ export default function RegisterScreen() {
           {/* Form */}
           <View style={styles.form}>
             {/* Full Name Field */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Nome completo</Text>
-              <TextInput
-                style={styles.input}
-                value={fullName}
-                onChangeText={setFullName}
-                placeholder="Seu nome"
-                placeholderTextColor="#999"
-                autoCapitalize="words"
-                autoCorrect={false}
-              />
-            </View>
+            <InputField
+              label="Nome completo"
+              value={fullName}
+              onChangeText={setFullName}
+              placeholder="Seu nome"
+              autoCapitalize="words"
+              autoCorrect={false}
+            />
 
             {/* Email Field */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="seu@email.com"
-                placeholderTextColor="#999"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
+            <InputField
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="seu@email.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
 
             {/* Phone Field */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Telefone</Text>
-              <TextInput
-                style={styles.input}
-                value={phone}
-                onChangeText={setPhone}
-                placeholder="+55 11 99999-9999"
-                placeholderTextColor="#999"
-                keyboardType="phone-pad"
-              />
-            </View>
+            <InputField
+              label="Telefone"
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="+55 11 99999-9999"
+              keyboardType="phone-pad"
+            />
 
             {/* Password Field */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Senha</Text>
-              <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="••••••••"
-                placeholderTextColor="#999"
-                secureTextEntry
-              />
-            </View>
+            <InputField
+              label="Senha"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="••••••••"
+              secureTextEntry
+            />
 
             {/* Confirm Password Field */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Confirmação de senha</Text>
-              <TextInput
-                style={styles.input}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                placeholder="••••••••"
-                placeholderTextColor="#999"
-                secureTextEntry
-              />
-            </View>
+            <InputField
+              label="Confirmação de senha"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="••••••••"
+              secureTextEntry
+            />
 
             {/* Register Button */}
-            <TouchableOpacity
-              style={[styles.registerButton, loading && styles.registerButtonDisabled]}
+            <PrimaryButton
+              title="Criar conta"
               onPress={handleRegister}
-              activeOpacity={0.8}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.registerButtonText}>Criar conta</Text>
-              )}
-            </TouchableOpacity>
+              loading={loading}
+            />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -231,40 +205,5 @@ const styles = StyleSheet.create({
   form: {
     paddingHorizontal: 24,
     paddingTop: 24,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#000',
-    marginBottom: 8,
-  },
-  input: {
-    height: 56,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: '#000',
-    backgroundColor: '#fff',
-  },
-  registerButton: {
-    height: 56,
-    backgroundColor: '#1C1C1E',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  registerButtonDisabled: {
-    opacity: 0.7,
-  },
-  registerButtonText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
   },
 });
