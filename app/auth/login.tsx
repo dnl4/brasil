@@ -5,13 +5,13 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useSnackbar } from 'flix-component/packages/snackbar/src';
 import { useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import { InputField } from '../../components/ui/input-field';
@@ -19,8 +19,8 @@ import { PrimaryButton } from '../../components/ui/primary-button';
 import { auth } from '../../firebaseConfig';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('danilofsouza@gmail.com');
+  const [password, setPassword] = useState('lllqwe123');
   const [isLoading, setIsLoading] = useState(false);
   const { show } = useSnackbar();
 
@@ -76,8 +76,7 @@ export default function LoginScreen() {
   };
 
   const handleCreateAccount = () => {
-    // Navigate to register screen
-    // router.push('/auth/register');
+    router.push('/auth/register');
   };
 
   return (
@@ -158,6 +157,7 @@ const styles = StyleSheet.create({
   },
   keyboardView: {
     flex: 1,
+    backgroundColor: '#fff',
   },
   scrollContent: {
     flexGrow: 1,

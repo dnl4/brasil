@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View
@@ -16,11 +17,11 @@ import { PrimaryButton } from '../../components/ui/primary-button';
 import { auth } from '../../firebaseConfig';
 
 export default function RegisterScreen() {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('Danilo Souza');
+  const [email, setEmail] = useState('danilofsouza@gmail.com');
+  const [phone, setPhone] = useState('+55 11 99999-9999');
+  const [password, setPassword] = useState('lllqwe123');
+  const [confirmPassword, setConfirmPassword] = useState('lllqwe123');
   const [loading, setLoading] = useState(false);
   const { show } = useSnackbar();
 
@@ -166,4 +167,37 @@ export default function RegisterScreen() {
   );
 }
 
-
+const styles = StyleSheet.create({
+  keyboardView: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  form: {
+    paddingHorizontal: 24,
+    paddingTop: 24,
+  },
+});
