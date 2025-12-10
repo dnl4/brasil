@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SnackbarProvider } from 'flix-component/packages/snackbar/src';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../contexts/auth-context';
 
 export const unstable_settings = {
@@ -37,7 +38,7 @@ function RootLayoutNav() {
   }
 
   return (
-    <>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="auth/welcome" options={{ headerShown: false }} />
@@ -45,7 +46,7 @@ function RootLayoutNav() {
         <Stack.Screen name="auth/register" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="dark" />
-    </>
+    </SafeAreaView>
   );
 }
 

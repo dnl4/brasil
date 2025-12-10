@@ -1,35 +1,35 @@
 import {
-    ArrowRight01Icon,
-    Call02Icon,
-    CreditCardIcon,
-    Delete02Icon,
-    DocumentValidationIcon,
-    Globe02Icon,
-    HelpCircleIcon,
-    InformationCircleIcon,
-    LanguageCircleIcon,
-    Link01Icon,
-    Location01Icon,
-    Logout01Icon,
-    Mail01Icon,
-    Moon02Icon,
-    Notification02Icon,
-    Settings02Icon,
-    Share01Icon,
-    ShieldUserIcon,
-    UserCircleIcon,
-    UserIcon,
+  ArrowRight01Icon,
+  Call02Icon,
+  CreditCardIcon,
+  Delete02Icon,
+  DocumentValidationIcon,
+  Globe02Icon,
+  HelpCircleIcon,
+  InformationCircleIcon,
+  LanguageCircleIcon,
+  Link01Icon,
+  Location01Icon,
+  Logout01Icon,
+  Mail01Icon,
+  Moon02Icon,
+  Notification02Icon,
+  Settings02Icon,
+  Share01Icon,
+  ShieldUserIcon,
+  UserCircleIcon,
+  UserIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { router } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import React, { useState } from 'react';
 import {
-    Animated,
-    Image,
-    Pressable,
-    StyleSheet,
-    View,
+  Animated,
+  Image,
+  Pressable,
+  StyleSheet,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -239,7 +239,7 @@ export default function ProfileScreen() {
             { opacity: collapsedHeaderOpacity },
           ]}
         >
-          <ThemedText style={styles.headerTitle}>Perfil</ThemedText>
+          <ThemedText style={styles.headerTitle}>Perfi3l</ThemedText>
           <View style={styles.smallAvatarContainer}>
             {user?.photoURL ? (
               <Image source={{ uri: user.photoURL }} style={styles.smallAvatar} />
