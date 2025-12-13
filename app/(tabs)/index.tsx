@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { Platform, StyleSheet, TouchableOpacity } from 'react-native';
 
@@ -13,7 +12,6 @@ export default function HomeScreen() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      router.replace('/auth/welcome');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }

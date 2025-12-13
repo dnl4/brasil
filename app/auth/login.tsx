@@ -39,7 +39,6 @@ export default function LoginScreen() {
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
       show('Login realizado com sucesso!', { backgroundColor: '#006e1c' });
-      router.replace('/(tabs)');
     } catch (error: any) {
       let errorMessage = 'Ocorreu um erro ao fazer login.';
 

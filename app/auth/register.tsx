@@ -59,7 +59,6 @@ export default function RegisterScreen() {
       });
 
       // Registro bem-sucedido, navegar para a tela principal
-      router.replace('/(tabs)');
     } catch (error: any) {
       let errorMessage = 'Ocorreu um erro ao criar sua conta.';
       

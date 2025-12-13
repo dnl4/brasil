@@ -20,8 +20,13 @@ const DOCUMENTS: DocumentInfo[] = [
 
 export default function DocumentosScreen() {
   const { user } = useAuth();
-  // Apenas o estado de completed é mantido no useState
-  const [completedItems, setCompletedItems] = useState<Record<string, boolean>>({});
+  // Apenas o estado de completed é mantido no useState - todos marcados por padrão
+  const [completedItems, setCompletedItems] = useState<Record<string, boolean>>({
+    '1': true,
+    '2': true,
+    '3': true,
+    '4': true,
+  });
 
   // Carregar documentos salvos do Firebase
   useEffect(() => {
