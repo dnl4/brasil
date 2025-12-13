@@ -1,4 +1,4 @@
-import { Briefcase01Icon, Home01Icon, StarIcon, UserIcon } from '@hugeicons/core-free-icons';
+import { Briefcase01Icon, FileAttachmentIcon, Home01Icon, StarIcon, UserIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { Tabs } from 'expo-router';
 import React from 'react';
@@ -58,6 +58,13 @@ export default function TabLayout() {
         options={{
           title: 'Minhas avaliações',
           tabBarIcon: ({ color }) => <HugeiconsIcon icon={StarIcon} size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="documentos"
+        options={{
+          title: 'Documentos',
+          tabBarIcon: ({ color }) => <HugeiconsIcon icon={FileAttachmentIcon} size={24} color={color} />,
         }}
       />
       <Tabs.Screen
