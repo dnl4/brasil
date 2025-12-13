@@ -8,14 +8,35 @@ interface DocumentInfo {
   id: string;
   title: string;
   description: string;
+  details: string;
 }
 
 // Dados estáticos fora do componente - edições aqui atualizam com Hot Reload
 const DOCUMENTS: DocumentInfo[] = [
-  { id: '1', title: 'RG ou Passaporte', description: 'Documento de identificação brasileiro' },
-  { id: '2', title: 'Certidão de Nascimento ou Casamento', description: 'Com apostilamento de Haia' },
-  { id: '3', title: 'Certificado de Antecedentes', description: 'Polícia Federal' },
-  { id: '4', title: 'CIVP para Febre Amarela', description: 'Certificado Internacional de Vacinação' },
+  { 
+    id: '1', 
+    title: 'RG ou Passaporte', 
+    description: 'Documento de identificação brasileiro',
+    details: 'O RG (Registro Geral) ou Passaporte válido é essencial para sua identificação. Certifique-se de que o documento esteja em bom estado e com validade adequada para todo o período de sua estadia.'
+  },
+  { 
+    id: '2', 
+    title: 'Certidão de Nascimento ou Casamento', 
+    description: 'Com apostilamento de Haia',
+    details: 'A certidão deve ser apostilada conforme a Convenção de Haia. O apostilamento pode ser feito em cartórios autorizados e garante a validade internacional do documento.'
+  },
+  { 
+    id: '3', 
+    title: 'Certificado de Antecedentes', 
+    description: 'Polícia Federal',
+    details: 'Solicite o Certificado de Antecedentes Criminais no site da Polícia Federal (www.pf.gov.br). O documento é gratuito e pode ser emitido online com validade de 90 dias.'
+  },
+  { 
+    id: '4', 
+    title: 'CIVP para Febre Amarela', 
+    description: 'Certificado Internacional de Vacinação',
+    details: 'O CIVP (Certificado Internacional de Vacinação ou Profilaxia) é emitido pela ANVISA após vacinação contra febre amarela. Agende a emissão pelo site da ANVISA com pelo menos 10 dias de antecedência.'
+  },
 ];
 
 export default function DocumentosScreen() {
@@ -27,6 +48,11 @@ export default function DocumentosScreen() {
     '3': true,
     '4': true,
   });
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+
+  const toggleExpanded = (id: string) => {
+    setExpandedItems(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Carregar documentos salvos do Firebase
   useEffect(() => {
@@ -84,17 +110,38 @@ export default function DocumentosScreen() {
                   completedItems[item.id] && styles.checkboxCompleted
                 ]}
               >
-                {completedItems[item.id] && <View style={styles.checkboxInner} />}
+                {completedItems[item.id] && <Text style={styles.checkmark}>✓</Text>}
               </TouchableOpacity>
               {index < DOCUMENTS.length - 1 && (
                 <View style={styles.connector} />
               )}
             </View>
             
-            <View style={styles.timelineRight}>
-              <Text style={styles.itemTitle}>{item.title}</Text>
-              <Text style={styles.itemDescription}>{item.description}</Text>
-            </View>
+            <TouchableOpacity 
+              style={styles.timelineRight}
+              onPress={() => toggleExpanded(item.id)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.titleRow}>
+                <View style={styles.titleContent}>
+                  <Text style={styles.itemTitle}>{item.title}</Text>
+                  <Text style={styles.itemDescription}>{item.description}</Text>
+                </View>
+                <View style={styles.moreDetailsButton}>
+                  <Text style={styles.moreDetailsText}>
+                    {expandedItems[item.id] ? 'Menos' : 'Mais detalhes'}
+                  </Text>
+                  <Text style={styles.chevron}>
+                    {expandedItems[item.id] ? '▲' : '▼'}
+                  </Text>
+                </View>
+              </View>
+              {expandedItems[item.id] && (
+                <View style={styles.detailsContainer}>
+                  <Text style={styles.detailsText}>{item.details}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
         ))}
       </ScrollView>
@@ -149,11 +196,10 @@ const styles = StyleSheet.create({
     borderColor: '#22C55E',
     backgroundColor: '#22C55E',
   },
-  checkboxInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#FFFFFF',
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   connector: {
     width: 2,
@@ -165,6 +211,15 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingBottom: 24,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  titleContent: {
+    flex: 1,
+    marginRight: 8,
+  },
   itemTitle: {
     fontSize: 16,
     fontWeight: '600',
@@ -174,5 +229,33 @@ const styles = StyleSheet.create({
   itemDescription: {
     fontSize: 14,
     color: '#6B7280',
+  },
+  moreDetailsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 6,
+  },
+  moreDetailsText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginRight: 4,
+  },
+  chevron: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  detailsContainer: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+  },
+  detailsText: {
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
   },
 });
