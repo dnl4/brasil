@@ -5,10 +5,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function WelcomeScreen() {
   const userName = 'Danilo'; // This would come from user data/context
+  const insets = useSafeAreaInsets();
 
   const handleAccessAccount = () => {
     router.push('/auth/login');
@@ -19,12 +20,12 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {/* Pink Background Area */}
       <View style={styles.topArea} />
 
       {/* Bottom White Card */}
-      <View style={styles.bottomCard}>
+      <View style={[styles.bottomCard, { paddingBottom: insets.bottom || 48 }]}>
         <Text style={styles.greeting}>Oi, {userName}</Text>
 
         {/* Access Account Button */}
@@ -44,7 +45,7 @@ export default function WelcomeScreen() {
           <Text style={styles.linkText}>Criar conta</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -63,7 +64,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     paddingHorizontal: 24,
     paddingTop: 40,
-    paddingBottom: 48,
   },
   greeting: {
     fontSize: 24,
