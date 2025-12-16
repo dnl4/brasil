@@ -1,103 +1,390 @@
-import { Image } from 'expo-image';
-import { signOut } from 'firebase/auth';
-import { Platform, StyleSheet, TouchableOpacity } from 'react-native';
+import { Search01Icon, StarIcon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react-native';
+import { router } from 'expo-router';
+import { useSnackbar } from 'flix-component/packages/snackbar/src';
+import React, { useState } from 'react';
+import {
+    ActivityIndicator,
+    FlatList,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { auth } from '@/firebaseConfig';
+import { RatingCard } from '@/components/ui/rating-card';
+import { ReportModal } from '@/components/ui/report-modal';
+import { WhatsappInput } from '@/components/ui/whatsapp-input';
+import { useAuth } from '@/contexts/auth-context';
+import {
+    calculateAverageRating,
+    deleteRating,
+    formatWhatsappDisplay,
+    getRatingsByWhatsapp,
+    Rating,
+} from '@/services/rating-service';
 
 export default function HomeScreen() {
-  const handleLogout = async () => {
+  const { user } = useAuth();
+  const { show } = useSnackbar();
+
+  const [searchWhatsapp, setSearchWhatsapp] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<Rating[] | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  // Modal de denúncia
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [selectedRatingForReport, setSelectedRatingForReport] = useState<Rating | null>(null);
+
+  const handleSearch = async () => {
+    if (!searchWhatsapp || searchWhatsapp.length < 10) {
+      show('Digite um número de WhatsApp válido.', { backgroundColor: '#ba1a1a' });
+      return;
+    }
+
+    setIsSearching(true);
+    setHasSearched(true);
+
     try {
-      await signOut(auth);
+      const results = await getRatingsByWhatsapp(searchWhatsapp);
+      setSearchResults(results);
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
+      console.error('Erro ao buscar avaliações:', error);
+      show('Erro ao buscar avaliações. Tente novamente.', { backgroundColor: '#ba1a1a' });
+    } finally {
+      setIsSearching(false);
     }
   };
 
+  const handleNewRating = () => {
+    // Passa o WhatsApp como parâmetro se já foi pesquisado
+    if (searchWhatsapp && searchResults !== null) {
+      router.push({
+        pathname: '/rating/[id]',
+        params: { id: 'new', whatsapp: searchWhatsapp },
+      });
+    } else {
+      router.push('/rating/new');
+    }
+  };
+
+  const handleEditRating = (rating: Rating) => {
+    router.push({
+      pathname: '/rating/[id]',
+      params: { id: rating.id },
+    });
+  };
+
+  const handleDeleteRating = async (rating: Rating) => {
+    try {
+      await deleteRating(rating.id);
+      show('Avaliação excluída com sucesso!', { backgroundColor: '#006e1c' });
+      
+      // Atualiza a lista
+      if (searchResults) {
+        setSearchResults(searchResults.filter((r) => r.id !== rating.id));
+      }
+    } catch (error) {
+      console.error('Erro ao excluir avaliação:', error);
+      show('Erro ao excluir avaliação. Tente novamente.', { backgroundColor: '#ba1a1a' });
+    }
+  };
+
+  const handleReportRating = (rating: Rating) => {
+    setSelectedRatingForReport(rating);
+    setReportModalVisible(true);
+  };
+
+  const averageRating = searchResults ? calculateAverageRating(searchResults) : 0;
+
+  const renderProviderCard = () => {
+    if (!searchResults || searchResults.length === 0) return null;
+
+    const providerName = searchResults.find((r) => r.prestadorNome)?.prestadorNome;
+
+    return (
+      <View style={styles.providerCard}>
+        <View style={styles.providerInfo}>
+          <Text style={styles.providerName}>
+            {providerName || 'Prestador'}
+          </Text>
+          <Text style={styles.providerWhatsapp}>
+            {formatWhatsappDisplay(searchWhatsapp)}
+          </Text>
+        </View>
+        <View style={styles.providerStats}>
+          <View style={styles.ratingBadge}>
+            <HugeiconsIcon icon={StarIcon} size={20} color="#FFB800" variant="solid" />
+            <Text style={styles.ratingValue}>{averageRating.toFixed(1)}</Text>
+          </View>
+          <Text style={styles.totalRatings}>
+            {searchResults.length} {searchResults.length === 1 ? 'avaliação' : 'avaliações'}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  const renderEmptyState = () => {
+    if (!hasSearched) {
+      return (
+        <View style={styles.emptyState}>
+          <HugeiconsIcon icon={Search01Icon} size={64} color="#D1D5DB" />
+          <Text style={styles.emptyTitle}>Busque um prestador</Text>
+          <Text style={styles.emptySubtitle}>
+            Digite o número de WhatsApp para ver as avaliações
+          </Text>
+        </View>
+      );
+    }
+
+    if (searchResults?.length === 0) {
+      return (
+        <View style={styles.emptyState}>
+          <HugeiconsIcon icon={StarIcon} size={64} color="#D1D5DB" />
+          <Text style={styles.emptyTitle}>Nenhuma avaliação encontrada</Text>
+          <Text style={styles.emptySubtitle}>
+            Seja o primeiro a avaliar este prestador!
+          </Text>
+          <TouchableOpacity style={styles.emptyButton} onPress={handleNewRating}>
+            <Text style={styles.emptyButtonText}>Avaliar agora</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return null;
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Buscar Prestador</Text>
+        <Text style={styles.headerSubtitle}>
+          Encontre avaliações por número de WhatsApp
+        </Text>
+      </View>
+
+      {/* Busca */}
+      <View style={styles.searchSection}>
+        <WhatsappInput
+          value={searchWhatsapp}
+          onChangeValue={setSearchWhatsapp}
+          label="Número do prestador"
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <ThemedText style={styles.logoutButtonText}>Sair da conta</ThemedText>
+        <TouchableOpacity
+          style={[styles.searchButton, isSearching && styles.searchButtonDisabled]}
+          onPress={handleSearch}
+          disabled={isSearching}
+        >
+          {isSearching ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <>
+              <HugeiconsIcon icon={Search01Icon} size={20} color="#fff" />
+              <Text style={styles.searchButtonText}>Buscar</Text>
+            </>
+          )}
         </TouchableOpacity>
-      </ThemedView>
-    </ParallaxScrollView>
+      </View>
+
+      {/* Resultados */}
+      {isSearching ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0066FF" />
+        </View>
+      ) : (
+        <FlatList
+          data={searchResults || []}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={renderProviderCard}
+          ListEmptyComponent={renderEmptyState}
+          renderItem={({ item }) => (
+            <RatingCard
+              rating={item}
+              currentUserId={user?.uid}
+              onEdit={handleEditRating}
+              onDelete={handleDeleteRating}
+              onReport={handleReportRating}
+            />
+          )}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+
+      {/* Botão de nova avaliação */}
+      {hasSearched && searchResults !== null && (
+        <TouchableOpacity style={styles.fab} onPress={handleNewRating}>
+          <Text style={styles.fabText}>+ Avaliar</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Modal de denúncia */}
+      {selectedRatingForReport && (
+        <ReportModal
+          visible={reportModalVisible}
+          ratingId={selectedRatingForReport.id}
+          reporterId={user?.uid || ''}
+          onClose={() => {
+            setReportModalVisible(false);
+            setSelectedRatingForReport(null);
+          }}
+          onSuccess={() => {
+            show('Denúncia enviada com sucesso!', { backgroundColor: '#006e1c' });
+          }}
+          onError={(error) => {
+            show(error, { backgroundColor: '#ba1a1a' });
+          }}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  headerSubtitle: {
+    fontSize: 15,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  searchSection: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  searchButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0066FF',
+    borderRadius: 12,
+    height: 50,
     gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  searchButtonDisabled: {
+    opacity: 0.7,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  searchButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
-  logoutButton: {
-    backgroundColor: '#ba1a1a',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+  },
+  listContent: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 100,
+    flexGrow: 1,
+  },
+  providerCard: {
+    backgroundColor: '#EBF5FF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  providerInfo: {
+    flex: 1,
+  },
+  providerName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  providerWhatsapp: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  providerStats: {
+    alignItems: 'flex-end',
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  ratingValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  totalRatings: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
     marginTop: 16,
   },
-  logoutButtonText: {
-    color: '#ffffff',
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  emptyButton: {
+    marginTop: 24,
+    backgroundColor: '#0066FF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  emptyButtonText: {
+    color: '#fff',
+    fontSize: 15,
     fontWeight: '600',
+  },
+  fab: {
+    position: 'absolute',
+    right: 24,
+    bottom: 24,
+    backgroundColor: '#0066FF',
+    borderRadius: 28,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  fabText: {
+    color: '#fff',
     fontSize: 16,
+    fontWeight: '600',
   },
 });

@@ -44,6 +44,13 @@ function RootLayoutNav() {
         <Stack.Screen name="auth/welcome" options={{ headerShown: false }} />
         <Stack.Screen name="auth/login" options={{ headerShown: false }} />
         <Stack.Screen name="auth/register" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="rating/[id]"
+          options={{
+            headerShown: false,
+            presentation: 'modal',
+          }}
+        />
       </Stack>
       <StatusBar style="dark" />
     </SafeAreaView>

@@ -1,0 +1,166 @@
+import {
+    Delete02Icon,
+    Flag01Icon,
+    PencilEdit01Icon,
+} from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react-native';
+import React from 'react';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+import { formatPartialName, Rating } from '@/services/rating-service';
+
+import { StarRating } from './star-rating';
+
+interface RatingCardProps {
+  rating: Rating;
+  currentUserId?: string;
+  onEdit?: (rating: Rating) => void;
+  onDelete?: (rating: Rating) => void;
+  onReport?: (rating: Rating) => void;
+  showProviderInfo?: boolean;
+}
+
+export function RatingCard({
+  rating,
+  currentUserId,
+  onEdit,
+  onDelete,
+  onReport,
+  showProviderInfo = false,
+}: RatingCardProps) {
+  const isOwner = currentUserId === rating.userId;
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Excluir avaliação',
+      'Tem certeza que deseja excluir esta avaliação? Esta ação não pode ser desfeita.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: () => onDelete?.(rating),
+        },
+      ]
+    );
+  };
+
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(date);
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Header com nome e data */}
+      <View style={styles.header}>
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>{formatPartialName(rating.userName)}</Text>
+          <Text style={styles.date}>{formatDate(rating.createdAt)}</Text>
+        </View>
+        <StarRating value={rating.rating} readonly size={16} spacing={2} />
+      </View>
+
+      {/* Info do prestador (se aplicável) */}
+      {showProviderInfo && rating.prestadorNome && (
+        <Text style={styles.providerName}>
+          Prestador: {rating.prestadorNome}
+        </Text>
+      )}
+
+      {/* Comentário */}
+      <Text style={styles.comment}>{rating.comment}</Text>
+
+      {/* Ações */}
+      <View style={styles.actions}>
+        {isOwner ? (
+          <>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => onEdit?.(rating)}
+            >
+              <HugeiconsIcon icon={PencilEdit01Icon} size={18} color="#6B7280" />
+              <Text style={styles.actionText}>Editar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handleDelete}
+            >
+              <HugeiconsIcon icon={Delete02Icon} size={18} color="#EF4444" />
+              <Text style={[styles.actionText, styles.deleteText]}>Excluir</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => onReport?.(rating)}
+          >
+            <HugeiconsIcon icon={Flag01Icon} size={18} color="#6B7280" />
+            <Text style={styles.actionText}>Denunciar</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  date: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  providerName: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  comment: {
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 20,
+  },
+  actions: {
+    flexDirection: 'row',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    gap: 16,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  actionText: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  deleteText: {
+    color: '#EF4444',
+  },
+});
