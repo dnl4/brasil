@@ -5,11 +5,15 @@ import { auth } from '../firebaseConfig';
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
+  holdRedirect: boolean;
+  setHoldRedirect: (hold: boolean) => void;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
+  holdRedirect: false,
+  setHoldRedirect: () => {},
 });
 
 export function useAuth() {
@@ -23,6 +27,7 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [holdRedirect, setHoldRedirect] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -34,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading }}>
+    <AuthContext.Provider value={{ user, isLoading, holdRedirect, setHoldRedirect }}>
       {children}
     </AuthContext.Provider>
   );

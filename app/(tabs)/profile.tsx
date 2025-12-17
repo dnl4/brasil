@@ -1,40 +1,40 @@
 import {
-  ArrowRight01Icon,
-  Call02Icon,
-  CreditCardIcon,
-  Delete02Icon,
-  DocumentValidationIcon,
-  Globe02Icon,
-  HelpCircleIcon,
-  InformationCircleIcon,
-  LanguageCircleIcon,
-  Link01Icon,
-  Location01Icon,
-  Logout01Icon,
-  Mail01Icon,
-  Moon02Icon,
-  Notification02Icon,
-  Settings02Icon,
-  Share01Icon,
-  ShieldUserIcon,
-  UserCircleIcon,
-  UserIcon,
+    ArrowRight01Icon,
+    Call02Icon,
+    CreditCardIcon,
+    Delete02Icon,
+    DocumentValidationIcon,
+    Globe02Icon,
+    HelpCircleIcon,
+    InformationCircleIcon,
+    LanguageCircleIcon,
+    Link01Icon,
+    Location01Icon,
+    Logout01Icon,
+    Mail01Icon,
+    Moon02Icon,
+    Notification02Icon,
+    Settings02Icon,
+    Share01Icon,
+    ShieldUserIcon,
+    UserCircleIcon,
+    UserIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
-import { router } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import React, { useState } from 'react';
 import {
-  Animated,
-  Image,
-  Pressable,
-  StyleSheet,
-  View,
+    Animated,
+    Image,
+    Pressable,
+    StyleSheet,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { CustomDialog } from '@/components/ui/custom-dialog';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/firebaseConfig';
@@ -92,11 +92,16 @@ export default function ProfileScreen() {
   const colors = Colors[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<'trips' | 'connections'>('trips');
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const scrollY = new Animated.Value(0);
 
-  const handleLogout = async () => {
+  const handleLogoutPress = () => {
+    setShowLogoutDialog(true);
+  };
+
+  const confirmLogout = async () => {
     try {
-      await signOut(auth); d
+      await signOut(auth);
     } catch (error) {
       console.error('Erro ao sair:', error);
     }
@@ -319,12 +324,24 @@ export default function ProfileScreen() {
           <MenuItem
             icon={Logout01Icon}
             label="Sair da conta"
-            onPress={handleLogout}
+            onPress={handleLogoutPress}
             danger
             showDivider={false}
           />
         </View>
       </Animated.ScrollView>
+
+      {/* Dialog de confirmação de logout */}
+      <CustomDialog
+        visible={showLogoutDialog}
+        title="Sair da conta"
+        message="Tem certeza que deseja sair?"
+        buttons={[
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Sair', style: 'destructive', onPress: confirmLogout },
+        ]}
+        onClose={() => setShowLogoutDialog(false)}
+      />
     </ThemedView>
   );
 }

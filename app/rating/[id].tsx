@@ -148,7 +148,7 @@ export default function RatingFormScreen() {
   if (isFetching) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0066FF" />
+        <ActivityIndicator size="large" color="#1C1C1E" />
       </View>
     );
   }

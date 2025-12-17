@@ -2,7 +2,6 @@ import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { router } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useSnackbar } from 'flix-component/packages/snackbar/src';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -14,59 +13,77 @@ import {
   View,
 } from 'react-native';
 
+import { CustomDialog } from '../../components/ui/custom-dialog';
 import { InputField } from '../../components/ui/input-field';
 import { PrimaryButton } from '../../components/ui/primary-button';
+import { useAuth } from '../../contexts/auth-context';
 import { auth } from '../../firebaseConfig';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('danilofsouza@gmail.com');
   const [password, setPassword] = useState('lllqwe123');
   const [isLoading, setIsLoading] = useState(false);
-  const { show } = useSnackbar();
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { setHoldRedirect } = useAuth();
 
   const handleLogin = async () => {
     // Validações
     if (!email.trim()) {
-      show('Por favor, insira seu email.', { backgroundColor: '#ba1a1a' });
+      setErrorMessage('Por favor, insira seu email.');
       return;
     }
     if (!password) {
-      show('Por favor, insira sua senha.', { backgroundColor: '#ba1a1a' });
+      setErrorMessage('Por favor, insira sua senha.');
       return;
     }
 
     setIsLoading(true);
+    setErrorMessage(null);
+    
+    // Bloqueia o redirect antes de fazer login
+    setHoldRedirect(true);
+    
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      show('Login realizado com sucesso!', { backgroundColor: '#006e1c' });
+      setShowSuccessDialog(true);
     } catch (error: any) {
-      let errorMessage = 'Ocorreu um erro ao fazer login.';
+      // Libera o redirect em caso de erro
+      setHoldRedirect(false);
+      
+      let message = 'Ocorreu um erro ao fazer login.';
 
       switch (error.code) {
         case 'auth/invalid-email':
-          errorMessage = 'Email inválido.';
+          message = 'Email inválido.';
           break;
         case 'auth/user-disabled':
-          errorMessage = 'Esta conta foi desativada.';
+          message = 'Esta conta foi desativada.';
           break;
         case 'auth/user-not-found':
-          errorMessage = 'Usuário não encontrado.';
+          message = 'Usuário não encontrado.';
           break;
         case 'auth/wrong-password':
-          errorMessage = 'Senha incorreta.';
+          message = 'Senha incorreta.';
           break;
         case 'auth/invalid-credential':
-          errorMessage = 'Email ou senha incorretos.';
+          message = 'Email ou senha incorretos.';
           break;
         case 'auth/too-many-requests':
-          errorMessage = 'Muitas tentativas. Tente novamente mais tarde.';
+          message = 'Muitas tentativas. Tente novamente mais tarde.';
           break;
       }
 
-      show(errorMessage, { backgroundColor: '#ba1a1a' });
+      setErrorMessage(message);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDialogClose = () => {
+    setShowSuccessDialog(false);
+    // Libera o redirect quando fechar o dialog
+    setHoldRedirect(false);
   };
 
   const handleForgotPassword = () => {
@@ -145,6 +162,22 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
         </ScrollView>
+
+        {/* Dialog de sucesso */}
+        <CustomDialog
+          visible={showSuccessDialog}
+          title="Bem-vindo!"
+          message="Login realizado com sucesso."
+          onClose={handleDialogClose}
+        />
+
+        {/* Dialog de erro */}
+        <CustomDialog
+          visible={!!errorMessage}
+          title="Erro"
+          message={errorMessage || ''}
+          onClose={() => setErrorMessage(null)}
+        />
       </KeyboardAvoidingView>
   );
 }

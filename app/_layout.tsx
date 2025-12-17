@@ -12,7 +12,7 @@ export const unstable_settings = {
 };
 
 function RootLayoutNav() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, holdRedirect } = useAuth();
   const segments = useSegments();
 
   // Mostra loading enquanto verifica autenticação
@@ -33,7 +33,8 @@ function RootLayoutNav() {
   }
 
   // Se está autenticado e está em uma rota de auth, redireciona para tabs
-  if (user && segments[0] === 'auth') {
+  // Mas só se não estiver com holdRedirect ativo (para permitir mostrar dialog)
+  if (user && segments[0] === 'auth' && !holdRedirect) {
     return <Redirect href="/(tabs)" />;
   }
 

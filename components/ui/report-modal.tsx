@@ -185,14 +185,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
   },
   reasonOptionSelected: {
-    backgroundColor: '#EBF5FF',
+    backgroundColor: '#F3F4F6',
   },
   radioOuter: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#0066FF',
+    borderColor: '#1C1C1E',
     marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#0066FF',
+    backgroundColor: '#1C1C1E',
   },
   reasonLabel: {
     fontSize: 15,

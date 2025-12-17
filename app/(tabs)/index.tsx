@@ -194,7 +194,7 @@ export default function HomeScreen() {
       {/* Resultados */}
       {isSearching ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0066FF" />
+          <ActivityIndicator size="large" color="#1C1C1E" />
         </View>
       ) : (
         <FlatList
@@ -274,9 +274,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0066FF',
+    backgroundColor: '#1C1C1E',
     borderRadius: 12,
-    height: 50,
+    height: 56,
     gap: 8,
   },
   searchButtonDisabled: {
@@ -358,21 +358,21 @@ const styles = StyleSheet.create({
   },
   emptyButton: {
     marginTop: 24,
-    backgroundColor: '#0066FF',
+    backgroundColor: '#1C1C1E',
     paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 12,
   },
   emptyButtonText: {
     color: '#fff',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
   fab: {
     position: 'absolute',
     right: 24,
     bottom: 24,
-    backgroundColor: '#0066FF',
+    backgroundColor: '#1C1C1E',
     borderRadius: 28,
     paddingHorizontal: 24,
     paddingVertical: 14,
