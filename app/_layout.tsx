@@ -1,10 +1,10 @@
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Redirect, Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { SnackbarProvider } from 'flix-component/packages/snackbar/src';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { SnackbarProvider } from '../components/ui/snackbar';
 import { AuthProvider, useAuth } from '../contexts/auth-context';
 
 export const unstable_settings = {

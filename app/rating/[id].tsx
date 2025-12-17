@@ -2,7 +2,6 @@ import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
-import { useSnackbar } from 'flix-component/packages/snackbar/src';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -15,6 +14,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useSnackbar } from '../../components/ui/snackbar';
 
 import { InputField } from '@/components/ui/input-field';
 import { PrimaryButton } from '@/components/ui/primary-button';

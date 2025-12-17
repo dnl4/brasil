@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { useSnackbar } from 'flix-component/packages/snackbar/src';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -12,8 +11,10 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { CustomDialog } from '../../components/ui/custom-dialog';
 import { InputField } from '../../components/ui/input-field';
 import { PrimaryButton } from '../../components/ui/primary-button';
+import { useSnackbar } from '../../components/ui/snackbar';
 import { auth } from '../../firebaseConfig';
 
 export default function RegisterScreen() {
@@ -23,6 +24,7 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('lllqwe123');
   const [confirmPassword, setConfirmPassword] = useState('lllqwe123');
   const [loading, setLoading] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const { show } = useSnackbar();
 
   const handleRegister = async () => {
@@ -58,7 +60,8 @@ export default function RegisterScreen() {
         displayName: fullName.trim(),
       });
 
-      // Registro bem-sucedido, navegar para a tela principal
+      // Registro bem-sucedido, mostrar dialog de sucesso
+      setShowSuccessDialog(true);
     } catch (error: any) {
       let errorMessage = 'Ocorreu um erro ao criar sua conta.';
       
@@ -162,6 +165,23 @@ export default function RegisterScreen() {
             />
           </View>
         </ScrollView>
+
+        {/* Success Dialog */}
+        <CustomDialog
+          visible={showSuccessDialog}
+          title="Conta criada com sucesso!"
+          message="Sua conta foi criada. Você já pode começar a usar o app."
+          buttons={[
+            {
+              text: 'Continuar',
+              onPress: () => {
+                setShowSuccessDialog(false);
+                router.replace('/(tabs)');
+              },
+            },
+          ]}
+          onClose={() => setShowSuccessDialog(false)}
+        />
       </KeyboardAvoidingView>
   );
 }

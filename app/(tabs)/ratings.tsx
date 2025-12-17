@@ -1,7 +1,6 @@
 import { StarIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { useSnackbar } from 'flix-component/packages/snackbar/src';
 import React, { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
@@ -13,6 +12,7 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSnackbar } from '../../components/ui/snackbar';
 
 import { RatingCard } from '@/components/ui/rating-card';
 import { ReportModal } from '@/components/ui/report-modal';

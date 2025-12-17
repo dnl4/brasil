@@ -24,6 +24,7 @@ import { HugeiconsIcon } from '@hugeicons/react-native';
 import { signOut } from 'firebase/auth';
 import React, { useState } from 'react';
 import {
+    Alert,
     Animated,
     Image,
     Pressable,
@@ -34,7 +35,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { CustomDialog } from '@/components/ui/custom-dialog';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/firebaseConfig';
@@ -92,11 +92,21 @@ export default function ProfileScreen() {
   const colors = Colors[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<'trips' | 'connections'>('trips');
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const scrollY = new Animated.Value(0);
 
   const handleLogoutPress = () => {
-    setShowLogoutDialog(true);
+    Alert.alert(
+      'Sair da conta',
+      'Tem certeza que deseja sair?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: confirmLogout,
+        },
+      ]
+    );
   };
 
   const confirmLogout = async () => {
@@ -330,18 +340,6 @@ export default function ProfileScreen() {
           />
         </View>
       </Animated.ScrollView>
-
-      {/* Dialog de confirmação de logout */}
-      <CustomDialog
-        visible={showLogoutDialog}
-        title="Sair da conta"
-        message="Tem certeza que deseja sair?"
-        buttons={[
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Sair', style: 'destructive', onPress: confirmLogout },
-        ]}
-        onClose={() => setShowLogoutDialog(false)}
-      />
     </ThemedView>
   );
 }

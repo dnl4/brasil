@@ -4,6 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { CustomDialog } from '@/components/ui/custom-dialog';
+import { useSnackbar } from '@/components/ui/snackbar';
 
 const CACHE_KEY = 'documents_completed';
 
@@ -44,10 +46,12 @@ const DOCUMENTS: DocumentInfo[] = [
 
 export default function DocumentosScreen() {
   const { user } = useAuth();
+  const { show } = useSnackbar();
   // Estado começa vazio e é carregado do cache local instantaneamente
   const [completedItems, setCompletedItems] = useState<Record<string, boolean>>({});
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const toggleExpanded = (id: string) => {
     setExpandedItems(prev => ({ ...prev, [id]: !prev[id] }));
@@ -120,10 +124,10 @@ export default function DocumentosScreen() {
     try {
       const docRef = doc(db, 'users', user.uid);
       await setDoc(docRef, { documents: completedItems }, { merge: true });
-      alert('Documentos salvos com sucesso!');
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error('Erro ao salvar documentos:', error);
-      alert('Erro ao salvar documentos');
+      show('Erro ao salvar documentos. Tente novamente.', { backgroundColor: '#ba1a1a' });
     }
   };
 
@@ -218,6 +222,14 @@ export default function DocumentosScreen() {
           </View>
         ))}
       </ScrollView>
+
+      {/* Dialog de sucesso */}
+      <CustomDialog
+        visible={showSuccessDialog}
+        title="Documentos salvos!"
+        message="Seus documentos foram sincronizados com sucesso."
+        onClose={() => setShowSuccessDialog(false)}
+      />
     </View>
   );
 }

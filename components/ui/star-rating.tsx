@@ -45,7 +45,7 @@ export function StarRating({
               icon={StarIcon}
               size={size}
               color={isFilled ? '#FFB800' : '#D1D5DB'}
-              variant={isFilled ? 'solid' : 'stroke'}
+              fill={isFilled ? '#FFB800' : 'transparent'}
             />
           </TouchableOpacity>
         );

@@ -16,6 +16,7 @@ import {
 import { CustomDialog } from '../../components/ui/custom-dialog';
 import { InputField } from '../../components/ui/input-field';
 import { PrimaryButton } from '../../components/ui/primary-button';
+import { useSnackbar } from '../../components/ui/snackbar';
 import { useAuth } from '../../contexts/auth-context';
 import { auth } from '../../firebaseConfig';
 
@@ -24,22 +25,21 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('lllqwe123');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { setHoldRedirect } = useAuth();
+  const { show } = useSnackbar();
 
   const handleLogin = async () => {
     // Validações
     if (!email.trim()) {
-      setErrorMessage('Por favor, insira seu email.');
+      show('Por favor, insira seu email.', { backgroundColor: '#ba1a1a' });
       return;
     }
     if (!password) {
-      setErrorMessage('Por favor, insira sua senha.');
+      show('Por favor, insira sua senha.', { backgroundColor: '#ba1a1a' });
       return;
     }
 
     setIsLoading(true);
-    setErrorMessage(null);
     
     // Bloqueia o redirect antes de fazer login
     setHoldRedirect(true);
@@ -74,7 +74,7 @@ export default function LoginScreen() {
           break;
       }
 
-      setErrorMessage(message);
+      show(message, { backgroundColor: '#ba1a1a' });
     } finally {
       setIsLoading(false);
     }
@@ -169,14 +169,6 @@ export default function LoginScreen() {
           title="Bem-vindo!"
           message="Login realizado com sucesso."
           onClose={handleDialogClose}
-        />
-
-        {/* Dialog de erro */}
-        <CustomDialog
-          visible={!!errorMessage}
-          title="Erro"
-          message={errorMessage || ''}
-          onClose={() => setErrorMessage(null)}
         />
       </KeyboardAvoidingView>
   );

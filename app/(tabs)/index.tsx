@@ -1,7 +1,6 @@
 import { Search01Icon, StarIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { router } from 'expo-router';
-import { useSnackbar } from 'flix-component/packages/snackbar/src';
 import React, { useState } from 'react';
 import {
     ActivityIndicator,
@@ -12,6 +11,7 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSnackbar } from '../../components/ui/snackbar';
 
 import { RatingCard } from '@/components/ui/rating-card';
 import { ReportModal } from '@/components/ui/report-modal';
@@ -116,7 +116,7 @@ export default function HomeScreen() {
         </View>
         <View style={styles.providerStats}>
           <View style={styles.ratingBadge}>
-            <HugeiconsIcon icon={StarIcon} size={20} color="#FFB800" variant="solid" />
+            <HugeiconsIcon icon={StarIcon} size={20} color="#FFB800" fill="#FFB800" />
             <Text style={styles.ratingValue}>{averageRating.toFixed(1)}</Text>
           </View>
           <Text style={styles.totalRatings}>
