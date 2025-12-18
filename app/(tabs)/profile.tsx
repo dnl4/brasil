@@ -1,22 +1,6 @@
 import {
     ArrowRight01Icon,
-    Call02Icon,
-    CreditCardIcon,
-    Delete02Icon,
-    DocumentValidationIcon,
-    Globe02Icon,
-    HelpCircleIcon,
-    InformationCircleIcon,
-    LanguageCircleIcon,
-    Link01Icon,
-    Location01Icon,
     Logout01Icon,
-    Mail01Icon,
-    Moon02Icon,
-    Notification02Icon,
-    Settings02Icon,
-    Share01Icon,
-    ShieldUserIcon,
     UserCircleIcon,
     UserIcon,
 } from '@hugeicons/core-free-icons';
@@ -45,10 +29,11 @@ type MenuItemProps = {
   label: string;
   onPress?: () => void;
   showDivider?: boolean;
+  fullWidthDivider?: boolean;
   danger?: boolean;
 };
 
-function MenuItem({ icon, label, onPress, showDivider = true, danger = false }: MenuItemProps) {
+function MenuItem({ icon, label, onPress, showDivider = true, fullWidthDivider = false, danger = false }: MenuItemProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const colors = Colors[colorScheme ?? 'light'];
@@ -76,7 +61,7 @@ function MenuItem({ icon, label, onPress, showDivider = true, danger = false }: 
       {showDivider && (
         <View
           style={[
-            styles.divider,
+            fullWidthDivider ? styles.fullDivider : styles.divider,
             { backgroundColor: isDark ? '#333' : '#eee' },
           ]}
         />
@@ -289,48 +274,14 @@ export default function ProfileScreen() {
         {/* Spacer for header */}
         <View style={{ height: 320 }} />
 
-        {/* Menu Section 1 */}
+        {/* Menu Section - Main Options */}
         <View
           style={[
             styles.menuSection,
             { backgroundColor: colors.background },
           ]}
         >
-          <MenuItem icon={UserCircleIcon} label="Informações pessoais" />
-          <MenuItem icon={Settings02Icon} label="Configurações da conta" />
-          <MenuItem icon={Notification02Icon} label="Notificações" />
-          <MenuItem icon={ShieldUserIcon} label="Privacidade e segurança" />
-          <MenuItem icon={CreditCardIcon} label="Pagamentos e cobranças" />
-          <MenuItem icon={HelpCircleIcon} label="Obter ajuda" />
-          <MenuItem icon={InformationCircleIcon} label="Sobre" showDivider={false} />
-        </View>
-
-        {/* Menu Section 2 - Profile Settings */}
-        <View
-          style={[
-            styles.menuSection,
-            { backgroundColor: colors.background },
-          ]}
-        >
-          <MenuItem icon={LanguageCircleIcon} label="Idioma" />
-          <MenuItem icon={Location01Icon} label="Localização" />
-          <MenuItem icon={Share01Icon} label="Compartilhar perfil" />
-          <MenuItem icon={Moon02Icon} label="Modo escuro" />
-          <MenuItem icon={Globe02Icon} label="Verificação de identidade" />
-          <MenuItem icon={DocumentValidationIcon} label="Documentos" />
-          <MenuItem icon={Link01Icon} label="Contas vinculadas" />
-          <MenuItem icon={Mail01Icon} label="E-mail de contato" />
-          <MenuItem icon={Call02Icon} label="Telefone" showDivider={false} />
-        </View>
-
-        {/* Danger Zone */}
-        <View
-          style={[
-            styles.menuSection,
-            { backgroundColor: colors.background, marginTop: 24 },
-          ]}
-        >
-          <MenuItem icon={Delete02Icon} label="Excluir conta" danger showDivider />
+          <MenuItem icon={UserCircleIcon} label="Informações pessoais" showDivider fullWidthDivider />
           <MenuItem
             icon={Logout01Icon}
             label="Sair da conta"
@@ -463,6 +414,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: 56,
+    right: 0,
+    height: 1,
+  },
+  fullDivider: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
     right: 0,
     height: 1,
   },
