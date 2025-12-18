@@ -1,11 +1,11 @@
+import { CustomDialog } from '@/components/ui/custom-dialog';
+import { useSnackbar } from '@/components/ui/snackbar';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { CustomDialog } from '@/components/ui/custom-dialog';
-import { useSnackbar } from '@/components/ui/snackbar';
 
 const CACHE_KEY = 'documents_completed';
 
