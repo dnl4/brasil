@@ -1,19 +1,20 @@
 import {
-    ArrowRight01Icon,
-    Logout01Icon,
-    UserCircleIcon,
-    UserIcon,
+  ArrowRight01Icon,
+  Logout01Icon,
+  Settings01FreeIcons,
+  UserIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
+import { useRouter } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import React, { useState } from 'react';
 import {
-    Alert,
-    Animated,
-    Image,
-    Pressable,
-    StyleSheet,
-    View,
+  Alert,
+  Animated,
+  Image,
+  Pressable,
+  StyleSheet,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -72,6 +73,7 @@ function MenuItem({ icon, label, onPress, showDivider = true, fullWidthDivider =
 
 export default function ProfileScreen() {
   const { user } = useAuth();
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const colors = Colors[colorScheme ?? 'light'];
@@ -281,7 +283,7 @@ export default function ProfileScreen() {
             { backgroundColor: colors.background },
           ]}
         >
-          <MenuItem icon={UserCircleIcon} label="Informações pessoais" showDivider fullWidthDivider />
+          <MenuItem icon={Settings01FreeIcons} label="Configurações de contato" onPress={() => router.push('/profile/contact-settings')} showDivider fullWidthDivider />
           <MenuItem
             icon={Logout01Icon}
             label="Sair da conta"
