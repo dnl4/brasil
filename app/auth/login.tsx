@@ -2,7 +2,7 @@ import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { router } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CustomDialog } from '../../components/ui/custom-dialog';
 import { InputField } from '../../components/ui/input-field';
@@ -27,6 +28,28 @@ export default function LoginScreen() {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const { setHoldRedirect } = useAuth();
   const { show } = useSnackbar();
+  
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewY = useRef(0);
+  const insets = useSafeAreaInsets();
+
+  const handleInputFocus = (inputY: number) => {
+    if (Platform.OS === 'ios') {
+      const headerHeight = 64;
+      const offset = inputY - insets.top - headerHeight;
+      
+      if (offset > 0) {
+        scrollViewRef.current?.scrollTo({
+          y: scrollViewY.current + offset,
+          animated: true,
+        });
+      }
+    }
+  };
+
+  const handleScroll = (event: any) => {
+    scrollViewY.current = event.nativeEvent.contentOffset.y;
+  };
 
   const handleLogin = async () => {
     // Validações
@@ -96,13 +119,20 @@ export default function LoginScreen() {
   };
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView
+          ref={scrollViewRef}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         >
           {/* Header */}
           <View style={styles.header}>
@@ -127,6 +157,7 @@ export default function LoginScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              onFocusWithPosition={handleInputFocus}
             />
 
             {/* Password Field */}
@@ -136,6 +167,7 @@ export default function LoginScreen() {
               onChangeText={setPassword}
               placeholder="••••••••"
               secureTextEntry
+              onFocusWithPosition={handleInputFocus}
             />
 
             {/* Login Button */}
@@ -171,10 +203,15 @@ export default function LoginScreen() {
           onClose={handleDialogClose}
         />
       </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -185,6 +222,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 40,
   },
   header: {
     flexDirection: 'row',

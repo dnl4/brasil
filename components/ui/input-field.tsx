@@ -1,3 +1,4 @@
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 import {
     TextInput as RNTextInput,
     TextInputProps as RNTextInputProps,
@@ -7,29 +8,63 @@ import {
     ViewStyle,
 } from 'react-native';
 
+type FocusEvent = Parameters<NonNullable<RNTextInputProps['onFocus']>>[0];
+
 interface InputFieldProps extends RNTextInputProps {
   label?: string;
   containerStyle?: ViewStyle;
+  onFocusWithPosition?: (y: number) => void;
 }
 
-export function InputField({
+export interface InputFieldRef {
+  focus: () => void;
+  measureLayout: (callback: (y: number) => void) => void;
+}
+
+export const InputField = forwardRef<InputFieldRef, InputFieldProps>(({
   label,
   containerStyle,
   style,
   placeholderTextColor = '#999',
+  onFocus,
+  onFocusWithPosition,
   ...props
-}: InputFieldProps) {
+}, ref) => {
+  const containerRef = useRef<View>(null);
+  const inputRef = useRef<RNTextInput>(null);
+
+  useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current?.focus(),
+    measureLayout: (callback) => {
+      containerRef.current?.measureInWindow((x, y) => {
+        callback(y);
+      });
+    },
+  }));
+
+  const handleFocus = useCallback((e: FocusEvent) => {
+    onFocus?.(e);
+    
+    if (onFocusWithPosition) {
+      containerRef.current?.measureInWindow((x, y) => {
+        onFocusWithPosition(y);
+      });
+    }
+  }, [onFocus, onFocusWithPosition]);
+
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View ref={containerRef} style={[styles.container, containerStyle]}>
       {label && <Text style={styles.label}>{label}</Text>}
       <RNTextInput
+        ref={inputRef}
         style={[styles.input, style]}
         placeholderTextColor={placeholderTextColor}
+        onFocus={handleFocus}
         {...props}
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

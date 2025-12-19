@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CustomDialog } from '../../components/ui/custom-dialog';
 import { InputField } from '../../components/ui/input-field';
 import { PrimaryButton } from '../../components/ui/primary-button';
@@ -26,6 +27,29 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const { show } = useSnackbar();
+  
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewY = useRef(0);
+  const insets = useSafeAreaInsets();
+
+  const handleInputFocus = (inputY: number) => {
+    if (Platform.OS === 'ios') {
+      // Calcula a posição considerando o safe area e o header
+      const headerHeight = 64; // altura aproximada do header
+      const offset = inputY - insets.top - headerHeight;
+      
+      if (offset > 0) {
+        scrollViewRef.current?.scrollTo({
+          y: scrollViewY.current + offset,
+          animated: true,
+        });
+      }
+    }
+  };
+
+  const handleScroll = (event: any) => {
+    scrollViewY.current = event.nativeEvent.contentOffset.y;
+  };
 
   const handleRegister = async () => {
     // Validações
@@ -87,13 +111,20 @@ export default function RegisterScreen() {
   };
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView
+          ref={scrollViewRef}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         >
           {/* Header */}
           <View style={styles.header}>
@@ -117,6 +148,7 @@ export default function RegisterScreen() {
               placeholder="Seu nome"
               autoCapitalize="words"
               autoCorrect={false}
+              onFocusWithPosition={handleInputFocus}
             />
 
             {/* Email Field */}
@@ -128,6 +160,7 @@ export default function RegisterScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              onFocusWithPosition={handleInputFocus}
             />
 
             {/* Phone Field */}
@@ -137,6 +170,7 @@ export default function RegisterScreen() {
               onChangeText={setPhone}
               placeholder="+55 11 99999-9999"
               keyboardType="phone-pad"
+              onFocusWithPosition={handleInputFocus}
             />
 
             {/* Password Field */}
@@ -146,6 +180,7 @@ export default function RegisterScreen() {
               onChangeText={setPassword}
               placeholder="••••••••"
               secureTextEntry
+              onFocusWithPosition={handleInputFocus}
             />
 
             {/* Confirm Password Field */}
@@ -155,6 +190,7 @@ export default function RegisterScreen() {
               onChangeText={setConfirmPassword}
               placeholder="••••••••"
               secureTextEntry
+              onFocusWithPosition={handleInputFocus}
             />
 
             {/* Register Button */}
@@ -183,16 +219,22 @@ export default function RegisterScreen() {
           onClose={() => setShowSuccessDialog(false)}
         />
       </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   keyboardView: {
     flex: 1,
     backgroundColor: '#fff',
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 40,
   },
   header: {
     flexDirection: 'row',
