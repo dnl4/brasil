@@ -283,7 +283,7 @@ export default function ProfileScreen() {
             { backgroundColor: colors.background },
           ]}
         >
-          <MenuItem icon={Settings01FreeIcons} label="Configurações de contato" onPress={() => router.push('/profile/contact-settings')} showDivider fullWidthDivider />
+          <MenuItem icon={Settings01FreeIcons} label="Configurações de contato" onPress={() => router.push('/(tabs)/(profile)/contact-settings')} showDivider fullWidthDivider />
           <MenuItem
             icon={Logout01Icon}
             label="Sair da conta"

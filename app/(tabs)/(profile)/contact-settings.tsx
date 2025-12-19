@@ -20,8 +20,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { CustomDialog } from '@/components/ui/custom-dialog';
 import { PrimaryButton } from '@/components/ui/primary-button';
-import { Snackbar } from '@/components/ui/snackbar';
+import { useSnackbar } from '@/components/ui/snackbar';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/firebaseConfig';
@@ -34,15 +35,12 @@ export default function ContactSettingsScreen() {
   const isDark = colorScheme === 'dark';
   const colors = Colors[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
+  const snackbar = useSnackbar();
 
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phoneNumber || '');
   const [loading, setLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ visible: boolean; message: string; type: 'success' | 'error' }>({
-    visible: false,
-    message: '',
-    type: 'success',
-  });
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const handleSave = async () => {
     if (!auth.currentUser) return;
@@ -58,15 +56,7 @@ export default function ContactSettingsScreen() {
       // Nota: O telefone normalmente requer verificação por SMS no Firebase
       // Por enquanto, vamos apenas mostrar uma mensagem de sucesso
 
-      setSnackbar({
-        visible: true,
-        message: 'Informações atualizadas com sucesso!',
-        type: 'success',
-      });
-
-      setTimeout(() => {
-        router.back();
-      }, 1500);
+      setShowSuccessDialog(true);
     } catch (error: any) {
       console.error('Erro ao atualizar:', error);
       let errorMessage = 'Erro ao atualizar informações';
@@ -79,11 +69,7 @@ export default function ContactSettingsScreen() {
         errorMessage = 'Este e-mail já está em uso';
       }
 
-      setSnackbar({
-        visible: true,
-        message: errorMessage,
-        type: 'error',
-      });
+      snackbar.show(errorMessage, { backgroundColor: '#F44336' });
     } finally {
       setLoading(false);
     }
@@ -194,11 +180,21 @@ export default function ContactSettingsScreen() {
         </View>
       </KeyboardAvoidingView>
 
-      <Snackbar
-        visible={snackbar.visible}
-        message={snackbar.message}
-        type={snackbar.type}
-        onDismiss={() => setSnackbar({ ...snackbar, visible: false })}
+      <CustomDialog
+        visible={showSuccessDialog}
+        title="Sucesso"
+        message="Informações atualizadas com sucesso!"
+        buttons={[
+          {
+            text: 'OK',
+            onPress: () => {
+              setShowSuccessDialog(false);
+            },
+          },
+        ]}
+        onClose={() => {
+          setShowSuccessDialog(false);
+        }}
       />
     </ThemedView>
   );
