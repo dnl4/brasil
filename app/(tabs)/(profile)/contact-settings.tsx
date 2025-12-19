@@ -1,5 +1,4 @@
 import {
-    ArrowLeft02Icon,
     Call02Icon,
     Mail01Icon,
 } from '@hugeicons/core-free-icons';
@@ -10,7 +9,6 @@ import React, { useState } from 'react';
 import {
     KeyboardAvoidingView,
     Platform,
-    Pressable,
     ScrollView,
     StyleSheet,
     TextInput,
@@ -77,27 +75,6 @@ export default function ContactSettingsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      {/* Header */}
-      <View
-        style={[
-          styles.header,
-          {
-            paddingTop: insets.top + 10,
-            backgroundColor: colors.background,
-            borderBottomColor: isDark ? '#333' : '#eee',
-          },
-        ]}
-      >
-        <Pressable
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <HugeiconsIcon icon={ArrowLeft02Icon} size={24} color={colors.text} />
-        </Pressable>
-        <ThemedText style={styles.headerTitle}>Configurações de contato</ThemedText>
-        <View style={styles.placeholder} />
-      </View>
-
       <KeyboardAvoidingView
         style={styles.content}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -203,25 +180,6 @@ export default function ContactSettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    padding: 8,
-    marginLeft: -8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  placeholder: {
-    width: 40,
   },
   content: {
     flex: 1,
