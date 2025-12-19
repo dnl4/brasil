@@ -1,8 +1,8 @@
 import { Stack } from 'expo-router';
 import React from 'react';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function ProfileLayout() {
   const colorScheme = useColorScheme();

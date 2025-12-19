@@ -2,7 +2,6 @@ import { FileAttachmentIcon, Home01Icon, StarIcon, UserIcon } from '@hugeicons/c
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 
@@ -22,8 +21,6 @@ export default function TabLayout() {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
           borderTopColor: '#F3F4F6',
-          height: Platform.OS === 'ios' ? 62 : 70,
-          paddingBottom: 10,
           paddingTop: 10,
         },
         tabBarLabelStyle: {
