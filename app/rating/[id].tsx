@@ -2,15 +2,15 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { useSnackbar } from '../../components/ui/snackbar';
 
@@ -21,9 +21,9 @@ import { WhatsappInput } from '@/components/ui/whatsapp-input';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/firebaseConfig';
 import {
-  createRating,
-  Rating,
-  updateRating,
+    createRating,
+    Rating,
+    updateRating,
 } from '@/services/rating-service';
 
 export default function RatingFormScreen() {
