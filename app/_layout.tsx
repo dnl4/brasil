@@ -47,7 +47,8 @@ function RootLayoutNav() {
         <Stack.Screen
           name="rating/[id]"
           options={{
-            headerShown: false,
+            headerShown: true,
+            title: 'Nova avaliação',
             presentation: 'modal',
           }}
         />

@@ -16,10 +16,22 @@ export default function ProfileLayout() {
     >
       <Stack.Screen name="profile" />
       <Stack.Screen
-        name="contact-settings"
+        name="account-settings"
         options={{
           headerShown: true,
-          title: 'Configurações de contato',
+          title: 'Configurações de conta',
+          headerStyle: {
+            backgroundColor: colors.background,
+          },
+          headerTintColor: colors.text,
+          headerShadowVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="change-password"
+        options={{
+          headerShown: true,
+          title: 'Alterar senha',
           headerStyle: {
             backgroundColor: colors.background,
           },

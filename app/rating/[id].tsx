@@ -1,18 +1,16 @@
-import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useSnackbar } from '../../components/ui/snackbar';
 
@@ -23,9 +21,9 @@ import { WhatsappInput } from '@/components/ui/whatsapp-input';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/firebaseConfig';
 import {
-    createRating,
-    Rating,
-    updateRating,
+  createRating,
+  Rating,
+  updateRating,
 } from '@/services/rating-service';
 
 export default function RatingFormScreen() {
@@ -154,28 +152,20 @@ export default function RatingFormScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+    <>
+      <Stack.Screen
+        options={{
+          title: isEditing ? 'Editar avaliação' : 'Nova avaliação',
+        }}
+      />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <HugeiconsIcon icon={ArrowLeft01Icon} size={28} color="#000" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            {isEditing ? 'Editar avaliação' : 'Nova avaliação'}
-          </Text>
-          <View style={styles.headerSpacer} />
-        </View>
-
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
         {/* Formulário */}
         <View style={styles.form}>
           {/* WhatsApp do prestador */}
@@ -236,6 +226,7 @@ export default function RatingFormScreen() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </>
   );
 }
 
@@ -252,28 +243,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingTop: 60,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  headerSpacer: {
-    width: 40,
   },
   form: {
     paddingHorizontal: 24,

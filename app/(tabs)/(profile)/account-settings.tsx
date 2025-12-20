@@ -1,18 +1,18 @@
 import {
-  Call02Icon,
-  Mail01Icon,
+    Call02Icon,
+    Mail01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { useRouter } from 'expo-router';
 import { updateEmail } from 'firebase/auth';
 import React, { useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+    View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -81,10 +81,7 @@ export default function ContactSettingsScreen() {
       >
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: insets.bottom + 100 },
-          ]}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           {/* E-mail Field */}
@@ -137,24 +134,16 @@ export default function ContactSettingsScreen() {
               A alteração do telefone pode requerer verificação por SMS
             </ThemedText>
           </View>
-        </ScrollView>
 
-        {/* Save Button */}
-        <View
-          style={[
-            styles.buttonContainer,
-            {
-              paddingBottom: insets.bottom + 20,
-              backgroundColor: colors.background,
-            },
-          ]}
-        >
-          <PrimaryButton
-            title={loading ? 'Salvando...' : 'Salvar alterações'}
-            onPress={handleSave}
-            disabled={loading}
-          />
-        </View>
+          {/* Save Button */}
+          <View style={styles.buttonContainer}>
+            <PrimaryButton
+              title={loading ? 'Salvando...' : 'Salvar alterações'}
+              onPress={handleSave}
+              disabled={loading}
+            />
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       <CustomDialog
@@ -189,6 +178,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
+    paddingBottom: 40,
   },
   fieldContainer: {
     marginBottom: 24,
@@ -216,7 +206,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   buttonContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    marginTop: 8,
   },
 });

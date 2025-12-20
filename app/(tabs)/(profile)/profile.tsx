@@ -1,5 +1,7 @@
+
 import {
   ArrowRight01Icon,
+  LockPasswordIcon,
   Logout01Icon,
   Settings01FreeIcons,
   UserIcon,
@@ -240,7 +242,7 @@ export default function ProfileScreen() {
             { opacity: collapsedHeaderOpacity },
           ]}
         >
-          <ThemedText style={styles.headerTitle}>Perfi3l</ThemedText>
+          <ThemedText style={styles.headerTitle}>Perfil</ThemedText>
           <View style={styles.smallAvatarContainer}>
             {user?.photoURL ? (
               <Image source={{ uri: user.photoURL }} style={styles.smallAvatar} />
@@ -283,7 +285,8 @@ export default function ProfileScreen() {
             { backgroundColor: colors.background },
           ]}
         >
-          <MenuItem icon={Settings01FreeIcons} label="Configurações de contato" onPress={() => router.push('/(tabs)/(profile)/contact-settings')} showDivider fullWidthDivider />
+          <MenuItem icon={Settings01FreeIcons} label="Configurações de conta" onPress={() => router.push('/(tabs)/(profile)/account-settings')} showDivider={false} fullWidthDivider={true} />
+          <MenuItem icon={LockPasswordIcon} label="Alterar senha" onPress={() => router.push('/(tabs)/(profile)/change-password')} showDivider fullWidthDivider />
           <MenuItem
             icon={Logout01Icon}
             label="Sair da conta"
