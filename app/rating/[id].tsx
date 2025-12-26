@@ -42,12 +42,15 @@ export default function RatingFormScreen() {
   // Form state
   const [whatsapp, setWhatsapp] = useState(initialWhatsapp || '');
   const [prestadorNome, setPrestadorNome] = useState('');
+  const [servico, setServico] = useState('');
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
 
   // Erros de validação
   const [errors, setErrors] = useState<{
     whatsapp?: string;
+    prestadorNome?: string;
+    servico?: string;
     rating?: string;
     comment?: string;
   }>({});
@@ -68,6 +71,7 @@ export default function RatingFormScreen() {
         const data = docSnap.data() as Rating;
         setWhatsapp(data.prestadorWhatsapp);
         setPrestadorNome(data.prestadorNome || '');
+        setServico(data.servico || '');
         setRating(data.rating);
         setComment(data.comment);
       } else {
@@ -88,6 +92,14 @@ export default function RatingFormScreen() {
 
     if (!whatsapp || whatsapp.length < 10) {
       newErrors.whatsapp = 'Digite um número de WhatsApp válido.';
+    }
+
+    if (!prestadorNome.trim()) {
+      newErrors.prestadorNome = 'O nome do prestador é obrigatório.';
+    }
+
+    if (!servico.trim()) {
+      newErrors.servico = 'O serviço prestado é obrigatório.';
     }
 
     if (rating === 0) {
@@ -117,7 +129,8 @@ export default function RatingFormScreen() {
     try {
       if (isEditing) {
         await updateRating(id, {
-          prestadorNome: prestadorNome.trim() || undefined,
+          prestadorNome: prestadorNome.trim(),
+          servico: servico.trim(),
           rating,
           comment: comment.trim(),
         });
@@ -125,7 +138,8 @@ export default function RatingFormScreen() {
       } else {
         await createRating({
           prestadorWhatsapp: whatsapp,
-          prestadorNome: prestadorNome.trim() || undefined,
+          prestadorNome: prestadorNome.trim(),
+          servico: servico.trim(),
           rating,
           comment: comment.trim(),
           userId: user.uid,
@@ -177,12 +191,22 @@ export default function RatingFormScreen() {
             error={errors.whatsapp}
           />
 
-          {/* Nome do prestador (opcional) */}
+          {/* Nome do prestador */}
           <InputField
-            label="Nome do prestador (opcional)"
+            label="Nome do prestador"
             value={prestadorNome}
             onChangeText={setPrestadorNome}
-            placeholder="Ex: João Eletricista"
+            placeholder="Ex: João Silva"
+            error={errors.prestadorNome}
+          />
+
+          {/* Serviço prestado */}
+          <InputField
+            label="Serviço prestado"
+            value={servico}
+            onChangeText={setServico}
+            placeholder="Ex: Eletricista, Encanador, Jardineiro..."
+            error={errors.servico}
           />
 
           {/* Avaliação em estrelas */}
@@ -194,7 +218,7 @@ export default function RatingFormScreen() {
 
           {/* Comentário */}
           <View style={styles.commentSection}>
-            <Text style={styles.label}>Comentário *</Text>
+            <Text style={styles.label}>Comentário</Text>
             <TextInput
               style={[styles.commentInput, errors.comment && styles.commentInputError]}
               value={comment}

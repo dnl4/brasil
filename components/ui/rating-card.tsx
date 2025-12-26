@@ -65,10 +65,15 @@ export function RatingCard({
       </View>
 
       {/* Info do prestador (se aplicável) */}
-      {showProviderInfo && rating.prestadorNome && (
-        <Text style={styles.providerName}>
-          Prestador: {rating.prestadorNome}
-        </Text>
+      {showProviderInfo && (
+        <>
+          <Text style={styles.providerName}>
+            Prestador: {rating.prestadorNome}
+          </Text>
+          <Text style={styles.providerName}>
+            Serviço: {rating.servico}
+          </Text>
+        </>
       )}
 
       {/* Comentário */}

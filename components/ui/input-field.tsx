@@ -14,6 +14,7 @@ interface InputFieldProps extends RNTextInputProps {
   label?: string;
   containerStyle?: ViewStyle;
   onFocusWithPosition?: (y: number) => void;
+  error?: string;
 }
 
 export interface InputFieldRef {
@@ -28,6 +29,7 @@ export const InputField = forwardRef<InputFieldRef, InputFieldProps>(({
   placeholderTextColor = '#999',
   onFocus,
   onFocusWithPosition,
+  error,
   ...props
 }, ref) => {
   const containerRef = useRef<View>(null);
@@ -57,11 +59,12 @@ export const InputField = forwardRef<InputFieldRef, InputFieldProps>(({
       {label && <Text style={styles.label}>{label}</Text>}
       <RNTextInput
         ref={inputRef}
-        style={[styles.input, style]}
+        style={[styles.input, error && styles.inputError, style]}
         placeholderTextColor={placeholderTextColor}
         onFocus={handleFocus}
         {...props}
       />
+      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 });
@@ -85,5 +88,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000',
     backgroundColor: '#fff',
+  },
+  inputError: {
+    borderColor: '#EF4444',
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#EF4444',
+    marginTop: 4,
   },
 });

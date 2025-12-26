@@ -11,12 +11,14 @@ import {
   where,
 } from 'firebase/firestore';
 
+import { COUNTRIES } from '@/constants/countries';
 import { db } from '@/firebaseConfig';
 
 export interface Rating {
   id: string;
   prestadorWhatsapp: string;
-  prestadorNome?: string;
+  prestadorNome: string;
+  servico: string;
   rating: number;
   comment: string;
   userId: string;
@@ -27,7 +29,8 @@ export interface Rating {
 
 export interface CreateRatingData {
   prestadorWhatsapp: string;
-  prestadorNome?: string;
+  prestadorNome: string;
+  servico: string;
   rating: number;
   comment: string;
   userId: string;
@@ -35,7 +38,8 @@ export interface CreateRatingData {
 }
 
 export interface UpdateRatingData {
-  prestadorNome?: string;
+  prestadorNome: string;
+  servico: string;
   rating: number;
   comment: string;
 }
@@ -66,14 +70,33 @@ export function formatWhatsappDisplay(whatsapp: string): string {
   // Remove tudo que não é dígito
   const digits = whatsapp.replace(/\D/g, '');
   
-  // Brasil: +55 (XX) XXXXX-XXXX
-  if (digits.startsWith('55') && digits.length === 13) {
-    return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
-  }
+  // Ordena países por tamanho do dialCode (maior primeiro) para evitar conflitos
+  const sortedCountries = [...COUNTRIES].sort((a, b) => {
+    const aDigits = a.dialCode.replace(/\D/g, '');
+    const bDigits = b.dialCode.replace(/\D/g, '');
+    return bDigits.length - aDigits.length;
+  });
   
-  // Paraguai: +595 (XXX) XXX-XXX
-  if (digits.startsWith('595') && digits.length >= 12) {
-    return `+595 (${digits.slice(3, 6)}) ${digits.slice(6, 9)}-${digits.slice(9)}`;
+  // Tenta encontrar o país correspondente
+  for (const country of sortedCountries) {
+    const dialDigits = country.dialCode.replace(/\D/g, '');
+    
+    if (digits.startsWith(dialDigits)) {
+      const phoneNumber = digits.slice(dialDigits.length);
+      
+      // Formatação especial para Brasil
+      if (country.code === 'BR' && digits.length === 13) {
+        return `${country.dialCode} (${phoneNumber.slice(0, 2)}) ${phoneNumber.slice(2, 7)}-${phoneNumber.slice(7)}`;
+      }
+      
+      // Formatação especial para Paraguai
+      if (country.code === 'PY' && phoneNumber.length >= 9) {
+        return `${country.dialCode} (${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6)}`;
+      }
+      
+      // Formatação padrão para outros países
+      return `${country.dialCode} ${phoneNumber}`;
+    }
   }
   
   // Fallback: apenas adiciona o +

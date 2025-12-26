@@ -106,8 +106,7 @@ export default function RatingsScreen() {
   const renderRatingItem = ({ item }: { item: Rating }) => (
     <View style={styles.ratingItemContainer}>
       <Text style={styles.providerWhatsapp}>
-        {formatWhatsappDisplay(item.prestadorWhatsapp)}
-        {item.prestadorNome && ` • ${item.prestadorNome}`}
+        {formatWhatsappDisplay(item.prestadorWhatsapp)} • {item.prestadorNome} • {item.servico}
       </Text>
       <RatingCard
         rating={item}

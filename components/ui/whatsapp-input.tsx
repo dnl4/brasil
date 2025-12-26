@@ -3,6 +3,7 @@ import { HugeiconsIcon } from '@hugeicons/react-native';
 import React, { useState } from 'react';
 import {
     Modal,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -10,33 +11,7 @@ import {
     View,
 } from 'react-native';
 
-interface Country {
-  code: string;
-  name: string;
-  flag: string;
-  dialCode: string;
-  mask: string;
-  placeholder: string;
-}
-
-const COUNTRIES: Country[] = [
-  {
-    code: 'BR',
-    name: 'Brasil',
-    flag: '🇧🇷',
-    dialCode: '+55',
-    mask: '(99) 99999-9999',
-    placeholder: '(11) 99999-9999',
-  },
-  {
-    code: 'PY',
-    name: 'Paraguai',
-    flag: '🇵🇾',
-    dialCode: '+595',
-    mask: '(999) 999-999',
-    placeholder: '(981) 123-456',
-  },
-];
+import { COUNTRIES, Country, findCountryByDialCode, getDefaultCountry } from '@/constants/countries';
 
 interface WhatsappInputProps {
   value: string;
@@ -54,8 +29,9 @@ export function WhatsappInput({
   error,
 }: WhatsappInputProps) {
   const [showCountryPicker, setShowCountryPicker] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]);
+  const [selectedCountry, setSelectedCountry] = useState<Country>(getDefaultCountry());
   const [localValue, setLocalValue] = useState('');
+  const [countryFilter, setCountryFilter] = useState('');
 
   // Inicializa o valor local baseado no value prop
   React.useEffect(() => {
@@ -63,12 +39,12 @@ export function WhatsappInput({
       const digits = value.replace(/\D/g, '');
       
       // Detecta o país pelo prefixo
-      if (digits.startsWith('55')) {
-        setSelectedCountry(COUNTRIES[0]); // Brasil
-        setLocalValue(formatPhoneNumber(digits.slice(2), COUNTRIES[0]));
-      } else if (digits.startsWith('595')) {
-        setSelectedCountry(COUNTRIES[1]); // Paraguai
-        setLocalValue(formatPhoneNumber(digits.slice(3), COUNTRIES[1]));
+      const detectedCountry = findCountryByDialCode(digits);
+      
+      if (detectedCountry) {
+        const dialDigits = detectedCountry.dialCode.replace(/\D/g, '');
+        setSelectedCountry(detectedCountry);
+        setLocalValue(formatPhoneNumber(digits.slice(dialDigits.length), detectedCountry));
       } else {
         setLocalValue(digits);
       }
@@ -78,6 +54,7 @@ export function WhatsappInput({
   const formatPhoneNumber = (digits: string, country: Country): string => {
     if (!digits) return '';
     
+    // Formata apenas Brasil e Paraguai que têm máscaras específicas
     if (country.code === 'BR') {
       // (XX) XXXXX-XXXX
       const match = digits.match(/^(\d{0,2})(\d{0,5})(\d{0,4})$/);
@@ -104,6 +81,7 @@ export function WhatsappInput({
       }
     }
     
+    // Para outros países, retorna os dígitos sem formatação
     return digits;
   };
 
@@ -113,8 +91,11 @@ export function WhatsappInput({
     // Remove tudo que não é dígito
     const digits = text.replace(/\D/g, '');
     
-    // Limita o tamanho
-    const maxLength = selectedCountry.code === 'BR' ? 11 : 9;
+    // Limita o tamanho baseado no país
+    let maxLength = 15; // default
+    if (selectedCountry.code === 'BR') maxLength = 11;
+    else if (selectedCountry.code === 'PY') maxLength = 9;
+    
     const limitedDigits = digits.slice(0, maxLength);
     
     // Formata para exibição
@@ -129,12 +110,23 @@ export function WhatsappInput({
   const handleCountrySelect = (country: Country) => {
     setSelectedCountry(country);
     setShowCountryPicker(false);
+    setCountryFilter('');
     
     // Recalcula o valor com o novo código de país
     const digits = localValue.replace(/\D/g, '');
     const dialDigits = country.dialCode.replace(/\D/g, '');
     onChangeValue(digits ? `${dialDigits}${digits}` : '');
   };
+
+  const filteredCountries = COUNTRIES.filter(country => {
+    if (!countryFilter) return true;
+    const search = countryFilter.toLowerCase();
+    return (
+      country.name.toLowerCase().includes(search) ||
+      country.dialCode.includes(search) ||
+      country.code.toLowerCase().includes(search)
+    );
+  });
 
   return (
     <View style={styles.container}>
@@ -176,30 +168,58 @@ export function WhatsappInput({
         visible={showCountryPicker}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowCountryPicker(false)}
+        onRequestClose={() => {
+          setShowCountryPicker(false);
+          setCountryFilter('');
+        }}
       >
         <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={() => setShowCountryPicker(false)}
+          onPress={() => {
+            setShowCountryPicker(false);
+            setCountryFilter('');
+          }}
         >
-          <View style={styles.modalContent}>
+          <TouchableOpacity 
+            activeOpacity={1} 
+            style={styles.modalContent}
+            onPress={(e) => e.stopPropagation()}
+          >
             <Text style={styles.modalTitle}>Selecione o país</Text>
-            {COUNTRIES.map((country) => (
-              <TouchableOpacity
-                key={country.code}
-                style={[
-                  styles.countryOption,
-                  selectedCountry.code === country.code && styles.countryOptionSelected,
-                ]}
-                onPress={() => handleCountrySelect(country)}
-              >
-                <Text style={styles.countryFlag}>{country.flag}</Text>
-                <Text style={styles.countryName}>{country.name}</Text>
-                <Text style={styles.countryDialCode}>{country.dialCode}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+            
+            <TextInput
+              style={styles.filterInput}
+              value={countryFilter}
+              onChangeText={setCountryFilter}
+              placeholder="Buscar país..."
+              placeholderTextColor="#9CA3AF"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            
+            <ScrollView style={styles.countriesList} showsVerticalScrollIndicator={false}>
+              {filteredCountries.map((country, index) => {
+                const originalIndex = COUNTRIES.findIndex(c => c.code === country.code);
+                return (
+                  <React.Fragment key={country.code}>
+                    <TouchableOpacity
+                      style={[
+                        styles.countryOption,
+                        selectedCountry.code === country.code && styles.countryOptionSelected,
+                      ]}
+                      onPress={() => handleCountrySelect(country)}
+                    >
+                      <Text style={styles.countryFlag}>{country.flag}</Text>
+                      <Text style={styles.countryName}>{country.name}</Text>
+                      <Text style={styles.countryDialCode}>{country.dialCode}</Text>
+                    </TouchableOpacity>
+                    {originalIndex === 1 && !countryFilter && <View style={styles.countrySeparator} />}
+                  </React.Fragment>
+                );
+              })}
+            </ScrollView>
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
     </View>
@@ -273,13 +293,28 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '100%',
     maxWidth: 320,
+    maxHeight: '80%',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 16,
+    marginBottom: 12,
     textAlign: 'center',
+  },
+  filterInput: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 15,
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  countriesList: {
+    maxHeight: 400,
   },
   countryOption: {
     flexDirection: 'row',
@@ -303,5 +338,10 @@ const styles = StyleSheet.create({
   countryDialCode: {
     fontSize: 14,
     color: '#6B7280',
+  },
+  countrySeparator: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 8,
   },
 });

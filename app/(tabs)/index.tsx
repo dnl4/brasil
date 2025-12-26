@@ -102,13 +102,16 @@ export default function HomeScreen() {
   const renderProviderCard = () => {
     if (!searchResults || searchResults.length === 0) return null;
 
-    const providerName = searchResults.find((r) => r.prestadorNome)?.prestadorNome;
+    const firstRating = searchResults[0];
 
     return (
       <View style={styles.providerCard}>
         <View style={styles.providerInfo}>
           <Text style={styles.providerName}>
-            {providerName || 'Prestador'}
+            {firstRating.prestadorNome}
+          </Text>
+          <Text style={styles.providerService}>
+            {firstRating.servico}
           </Text>
           <Text style={styles.providerWhatsapp}>
             {formatWhatsappDisplay(searchWhatsapp)}
@@ -314,6 +317,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#1F2937',
+  },
+  providerService: {
+    fontSize: 14,
+    color: '#374151',
+    marginTop: 2,
   },
   providerWhatsapp: {
     fontSize: 14,
