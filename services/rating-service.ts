@@ -50,10 +50,18 @@ const RATINGS_COLLECTION = 'ratings';
  * Formata o nome do usuário para exibição parcial (ex: "João Silva" -> "João S.")
  */
 export function formatPartialName(fullName: string): string {
-  if (!fullName) return 'Anônimo';
+  if (!fullName) return 'Usuário anônimo';
+  
+  // Se for email, oculta completamente
+  if (fullName.includes('@')) {
+    return 'Usuário anônimo';
+  }
   
   const parts = fullName.trim().split(' ');
-  if (parts.length === 1) return parts[0];
+  if (parts.length === 1) {
+    // Se for apenas uma palavra, mostra primeira letra e ***
+    return `${parts[0].charAt(0)}***`;
+  }
   
   const firstName = parts[0];
   const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();

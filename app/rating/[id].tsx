@@ -25,6 +25,7 @@ import {
     Rating,
     updateRating,
 } from '@/services/rating-service';
+import { getUserProfile } from '@/services/user-service';
 
 export default function RatingFormScreen() {
   const { id, whatsapp: initialWhatsapp } = useLocalSearchParams<{
@@ -136,6 +137,10 @@ export default function RatingFormScreen() {
         });
         show('Avaliação atualizada com sucesso!', { backgroundColor: '#006e1c' });
       } else {
+        // Busca o nome de exibição do perfil do usuário
+        const profile = await getUserProfile(user.uid);
+        const displayName = profile?.displayName || user.displayName || user.email || 'Usuário';
+
         await createRating({
           prestadorWhatsapp: whatsapp,
           prestadorNome: prestadorNome.trim(),
@@ -143,7 +148,7 @@ export default function RatingFormScreen() {
           rating,
           comment: comment.trim(),
           userId: user.uid,
-          userName: user.displayName || user.email || 'Usuário',
+          userName: displayName,
         });
         show('Avaliação criada com sucesso!', { backgroundColor: '#006e1c' });
       }

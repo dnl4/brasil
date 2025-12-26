@@ -1,18 +1,20 @@
 import {
-    Call02Icon,
-    Mail01Icon,
+  Call02Icon,
+  Mail01Icon,
+  UserIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { useRouter } from 'expo-router';
 import { updateEmail } from 'firebase/auth';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    TextInput,
-    View
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -25,6 +27,7 @@ import { Colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/firebaseConfig';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { getUserProfile, updateUserProfile } from '@/services/user-service';
 
 export default function ContactSettingsScreen() {
   const { user } = useAuth();
@@ -35,24 +38,63 @@ export default function ContactSettingsScreen() {
   const insets = useSafeAreaInsets();
   const snackbar = useSnackbar();
 
+  const [displayName, setDisplayName] = useState('');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phoneNumber || '');
   const [loading, setLoading] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
+  useEffect(() => {
+    loadUserProfile();
+  }, [user]);
+
+  const loadUserProfile = async () => {
+    if (!user) return;
+    
+    setLoadingProfile(true);
+    try {
+      const profile = await getUserProfile(user.uid);
+      if (profile) {
+        setDisplayName(profile.displayName || '');
+        setFullName(profile.fullName || '');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar perfil:', error);
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
   const handleSave = async () => {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser || !user) return;
+
+    // Validações
+    if (!displayName.trim()) {
+      snackbar.show('Nome de exibição é obrigatório', { backgroundColor: '#F44336' });
+      return;
+    }
+
+    if (!fullName.trim()) {
+      snackbar.show('Nome completo é obrigatório', { backgroundColor: '#F44336' });
+      return;
+    }
 
     setLoading(true);
     try {
+      // Atualizar perfil no Firestore
+      await updateUserProfile(user.uid, {
+        displayName: displayName.trim(),
+        fullName: fullName.trim(),
+        email: email.trim(),
+        phoneNumber: phone.trim(),
+      });
+
       // Atualizar e-mail se foi alterado
       if (email !== user?.email && email.trim()) {
         await updateEmail(auth.currentUser, email.trim());
       }
-
-      // Atualizar perfil com telefone (armazenado no displayName ou custom claims)
-      // Nota: O telefone normalmente requer verificação por SMS no Firebase
-      // Por enquanto, vamos apenas mostrar uma mensagem de sucesso
 
       setShowSuccessDialog(true);
     } catch (error: any) {
@@ -73,6 +115,14 @@ export default function ContactSettingsScreen() {
     }
   };
 
+  if (loadingProfile) {
+    return (
+      <ThemedView style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color={colors.text} />
+      </ThemedView>
+    );
+  }
+
   return (
     <ThemedView style={styles.container}>
       <KeyboardAvoidingView
@@ -84,6 +134,58 @@ export default function ContactSettingsScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          {/* Display Name Field */}
+          <View style={styles.fieldContainer}>
+            <View style={styles.labelRow}>
+              <HugeiconsIcon icon={UserIcon} size={20} color={colors.icon} />
+              <ThemedText style={styles.label}>Nome de exibição</ThemedText>
+            </View>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: isDark ? '#1a1a1a' : '#fff',
+                  borderColor: isDark ? '#333' : '#e5e5e5',
+                  color: colors.text,
+                },
+              ]}
+              value={displayName}
+              onChangeText={setDisplayName}
+              placeholder="Como você quer ser chamado"
+              placeholderTextColor={isDark ? '#666' : '#999'}
+              autoCapitalize="words"
+            />
+            <ThemedText style={styles.helperText}>
+              Este nome será exibido nas suas avaliações
+            </ThemedText>
+          </View>
+
+          {/* Full Name Field */}
+          <View style={styles.fieldContainer}>
+            <View style={styles.labelRow}>
+              <HugeiconsIcon icon={UserIcon} size={20} color={colors.icon} />
+              <ThemedText style={styles.label}>Nome completo</ThemedText>
+            </View>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: isDark ? '#1a1a1a' : '#fff',
+                  borderColor: isDark ? '#333' : '#e5e5e5',
+                  color: colors.text,
+                },
+              ]}
+              value={fullName}
+              onChangeText={setFullName}
+              placeholder="Seu nome completo"
+              placeholderTextColor={isDark ? '#666' : '#999'}
+              autoCapitalize="words"
+            />
+            <ThemedText style={styles.helperText}>
+              Mantido em privado, não será exibido publicamente
+            </ThemedText>
+          </View>
+
           {/* E-mail Field */}
           <View style={styles.fieldContainer}>
             <View style={styles.labelRow}>
@@ -131,7 +233,7 @@ export default function ContactSettingsScreen() {
               keyboardType="phone-pad"
             />
             <ThemedText style={styles.helperText}>
-              A alteração do telefone pode requerer verificação por SMS
+              A alteração do telefone pode requerer verificação por Whatsapp
             </ThemedText>
           </View>
 
@@ -169,6 +271,10 @@ export default function ContactSettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,

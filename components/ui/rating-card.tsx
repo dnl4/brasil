@@ -1,13 +1,14 @@
 import {
-    Delete02Icon,
-    Flag01Icon,
-    PencilEdit01Icon,
+  Delete02Icon,
+  Flag01Icon,
+  PencilEdit01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { formatPartialName, Rating } from '@/services/rating-service';
+import { Rating } from '@/services/rating-service';
+import { getUserProfile } from '@/services/user-service';
 
 import { StarRating } from './star-rating';
 
@@ -29,6 +30,38 @@ export function RatingCard({
   showProviderInfo = false,
 }: RatingCardProps) {
   const isOwner = currentUserId === rating.userId;
+  const [displayName, setDisplayName] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadDisplayName();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadDisplayName = async () => {
+    try {
+      // Tenta buscar o displayName do perfil
+      const profile = await getUserProfile(rating.userId);
+      if (profile?.displayName) {
+        setDisplayName(profile.displayName);
+      } else if (!rating.userName.includes('@')) {
+        // Se não tiver perfil mas userName não for email, usa userName
+        setDisplayName(rating.userName);
+      } else {
+        // Se for email e não tiver perfil, é anônimo
+        setDisplayName('Usuário anônimo');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar nome:', error);
+      if (!rating.userName.includes('@')) {
+        setDisplayName(rating.userName);
+      } else {
+        setDisplayName('Usuário anônimo');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDelete = () => {
     Alert.alert(
@@ -58,7 +91,9 @@ export function RatingCard({
       {/* Header com nome e data */}
       <View style={styles.header}>
         <View style={styles.userInfo}>
-          <Text style={styles.userName}>{formatPartialName(rating.userName)}</Text>
+          <Text style={styles.userName}>
+            {isLoading ? '...' : displayName}
+          </Text>
           <Text style={styles.date}>{formatDate(rating.createdAt)}</Text>
         </View>
         <StarRating value={rating.rating} readonly size={16} spacing={2} />

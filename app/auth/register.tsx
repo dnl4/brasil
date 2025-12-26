@@ -17,13 +17,15 @@ import { InputField } from '../../components/ui/input-field';
 import { PrimaryButton } from '../../components/ui/primary-button';
 import { useSnackbar } from '../../components/ui/snackbar';
 import { auth } from '../../firebaseConfig';
+import { updateUserProfile } from '../../services/user-service';
 
 export default function RegisterScreen() {
-  const [fullName, setFullName] = useState('Danilo Souza');
-  const [email, setEmail] = useState('danilofsouza@gmail.com');
-  const [phone, setPhone] = useState('+55 11 99999-9999');
-  const [password, setPassword] = useState('lllqwe123');
-  const [confirmPassword, setConfirmPassword] = useState('lllqwe123');
+  const [displayName, setDisplayName] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const { show } = useSnackbar();
@@ -53,6 +55,10 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     // Validações
+    if (!displayName.trim()) {
+      show('Por favor, insira seu nome de exibição.', { backgroundColor: '#ba1a1a' });
+      return;
+    }
     if (!fullName.trim()) {
       show('Por favor, insira seu nome completo.', { backgroundColor: '#ba1a1a' });
       return;
@@ -79,9 +85,17 @@ export default function RegisterScreen() {
       // Criar usuário no Firebase
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       
-      // Atualizar o perfil com o nome
+      // Atualizar o perfil com o nome de exibição
       await updateProfile(userCredential.user, {
-        displayName: fullName.trim(),
+        displayName: displayName.trim(),
+      });
+
+      // Salvar perfil completo no Firestore
+      await updateUserProfile(userCredential.user.uid, {
+        displayName: displayName.trim(),
+        fullName: fullName.trim(),
+        email: email.trim(),
+        phoneNumber: phone.trim(),
       });
 
       // Registro bem-sucedido, mostrar dialog de sucesso
@@ -140,15 +154,28 @@ export default function RegisterScreen() {
 
           {/* Form */}
           <View style={styles.form}>
+            {/* Display Name Field */}
+            <InputField
+              label="Nome de exibição"
+              value={displayName}
+              onChangeText={setDisplayName}
+              placeholder="Como você quer ser chamado"
+              autoCapitalize="words"
+              autoCorrect={false}
+              onFocusWithPosition={handleInputFocus}
+              helperText="Este nome será exibido publicamente nas suas avaliações"
+            />
+
             {/* Full Name Field */}
             <InputField
               label="Nome completo"
               value={fullName}
               onChangeText={setFullName}
-              placeholder="Seu nome"
+              placeholder="Seu nome completo"
               autoCapitalize="words"
               autoCorrect={false}
               onFocusWithPosition={handleInputFocus}
+              helperText="Privado, não será exibido publicamente"
             />
 
             {/* Email Field */}
