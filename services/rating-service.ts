@@ -188,6 +188,54 @@ export async function getRatingsByUser(userId: string): Promise<Rating[]> {
 }
 
 /**
+ * Busca avaliações por tipo de serviço (case-insensitive)
+ */
+export async function getRatingsByService(service: string): Promise<Rating[]> {
+  const q = query(
+    collection(db, RATINGS_COLLECTION),
+    orderBy('createdAt', 'desc')
+  );
+  
+  const snapshot = await getDocs(q);
+  
+  // Filtra no cliente (case-insensitive)
+  const searchTerm = service.toLowerCase().trim();
+  
+  return snapshot.docs
+    .map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate() || new Date(),
+      updatedAt: doc.data().updatedAt?.toDate(),
+    }))
+    .filter((rating) => 
+      rating.servico?.toLowerCase().includes(searchTerm)
+    ) as Rating[];
+}
+
+/**
+ * Busca todos os tipos de serviços únicos cadastrados
+ */
+export async function getUniqueServices(): Promise<string[]> {
+  const q = query(collection(db, RATINGS_COLLECTION));
+  const snapshot = await getDocs(q);
+  
+  const servicesSet = new Set<string>();
+  
+  snapshot.docs.forEach((doc) => {
+    const servico = doc.data().servico;
+    if (servico && servico.trim()) {
+      servicesSet.add(servico.trim());
+    }
+  });
+  
+  // Retorna array ordenado alfabeticamente
+  return Array.from(servicesSet).sort((a, b) => 
+    a.localeCompare(b, 'pt-BR', { sensitivity: 'base' })
+  );
+}
+
+/**
  * Calcula a média de avaliações
  */
 export function calculateAverageRating(ratings: Rating[]): number {

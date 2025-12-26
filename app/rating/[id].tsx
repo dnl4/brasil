@@ -16,12 +16,14 @@ import { useSnackbar } from '../../components/ui/snackbar';
 
 import { InputField } from '@/components/ui/input-field';
 import { PrimaryButton } from '@/components/ui/primary-button';
+import { ServiceSelect } from '@/components/ui/service-select';
 import { StarRating } from '@/components/ui/star-rating';
 import { WhatsappInput } from '@/components/ui/whatsapp-input';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/firebaseConfig';
 import {
     createRating,
+    getUniqueServices,
     Rating,
     updateRating,
 } from '@/services/rating-service';
@@ -39,6 +41,8 @@ export default function RatingFormScreen() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(isEditing);
+  const [availableServices, setAvailableServices] = useState<string[]>([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(true);
 
   // Form state
   const [whatsapp, setWhatsapp] = useState(initialWhatsapp || '');
@@ -56,12 +60,28 @@ export default function RatingFormScreen() {
     comment?: string;
   }>({});
 
+  // Carrega serviços disponíveis
+  useEffect(() => {
+    loadServices();
+  }, []);
+
   // Carrega dados da avaliação se estiver editando
   useEffect(() => {
     if (isEditing && id) {
       loadRating();
     }
   }, [id]);
+
+  const loadServices = async () => {
+    try {
+      const services = await getUniqueServices();
+      setAvailableServices(services);
+    } catch (error) {
+      console.error('Erro ao carregar serviços:', error);
+    } finally {
+      setIsLoadingServices(false);
+    }
+  };
 
   const loadRating = async () => {
     try {
@@ -206,13 +226,21 @@ export default function RatingFormScreen() {
           />
 
           {/* Serviço prestado */}
-          <InputField
-            label="Serviço prestado"
-            value={servico}
-            onChangeText={setServico}
-            placeholder="Ex: Eletricista, Encanador, Jardineiro..."
-            error={errors.servico}
-          />
+          {isLoadingServices ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#1C1C1E" />
+            </View>
+          ) : (
+            <ServiceSelect
+              services={availableServices}
+              selectedService={servico}
+              onSelectService={setServico}
+              placeholder="Selecione o serviço prestado"
+              label="Serviço prestado"
+              allowCustom={true}
+            />
+          )}
+          {errors.servico && <Text style={styles.errorText}>{errors.servico}</Text>}
 
           {/* Avaliação em estrelas */}
           <View style={styles.ratingSection}>
