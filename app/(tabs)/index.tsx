@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSnackbar } from '../../components/ui/snackbar';
 
-import { RatingCard } from '@/components/ui/rating-card';
+import { RatingsModal } from '@/components/ui/ratings-modal';
 import { ReportModal } from '@/components/ui/report-modal';
 import { WhatsappInput } from '@/components/ui/whatsapp-input';
 import { useAuth } from '@/contexts/auth-context';
@@ -34,7 +34,8 @@ export default function HomeScreen() {
   const [searchResults, setSearchResults] = useState<Rating[] | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Modal de denúncia
+  // Modais
+  const [ratingsModalVisible, setRatingsModalVisible] = useState(false);
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [selectedRatingForReport, setSelectedRatingForReport] = useState<Rating | null>(null);
 
@@ -84,7 +85,13 @@ export default function HomeScreen() {
       
       // Atualiza a lista
       if (searchResults) {
-        setSearchResults(searchResults.filter((r) => r.id !== rating.id));
+        const updatedResults = searchResults.filter((r) => r.id !== rating.id);
+        setSearchResults(updatedResults);
+        
+        // Fecha o modal se não houver mais avaliações
+        if (updatedResults.length === 0) {
+          setRatingsModalVisible(false);
+        }
       }
     } catch (error) {
       console.error('Erro ao excluir avaliação:', error);
@@ -105,7 +112,11 @@ export default function HomeScreen() {
     const firstRating = searchResults[0];
 
     return (
-      <View style={styles.providerCard}>
+      <TouchableOpacity 
+        style={styles.providerCard}
+        onPress={() => setRatingsModalVisible(true)}
+        activeOpacity={0.7}
+      >
         <View style={styles.providerInfo}>
           <Text style={styles.providerName}>
             {firstRating.prestadorNome}
@@ -126,7 +137,7 @@ export default function HomeScreen() {
             {searchResults.length} {searchResults.length === 1 ? 'avaliação' : 'avaliações'}
           </Text>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -200,23 +211,10 @@ export default function HomeScreen() {
           <ActivityIndicator size="large" color="#1C1C1E" />
         </View>
       ) : (
-        <FlatList
-          data={searchResults || []}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={renderProviderCard}
-          ListEmptyComponent={renderEmptyState}
-          renderItem={({ item }) => (
-            <RatingCard
-              rating={item}
-              currentUserId={user?.uid}
-              onEdit={handleEditRating}
-              onDelete={handleDeleteRating}
-              onReport={handleReportRating}
-            />
-          )}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
+        <View style={styles.resultsContainer}>
+          {renderProviderCard()}
+          {renderEmptyState()}
+        </View>
       )}
 
       {/* Botão de nova avaliação */}
@@ -224,6 +222,20 @@ export default function HomeScreen() {
         <TouchableOpacity style={styles.fab} onPress={handleNewRating}>
           <Text style={styles.fabText}>+ Avaliar</Text>
         </TouchableOpacity>
+      )}
+
+      {/* Modal de avaliações */}
+      {searchResults && searchResults.length > 0 && (
+        <RatingsModal
+          visible={ratingsModalVisible}
+          ratings={searchResults}
+          currentUserId={user?.uid}
+          providerName={searchResults[0].prestadorNome}
+          onClose={() => setRatingsModalVisible(false)}
+          onEdit={handleEditRating}
+          onDelete={handleDeleteRating}
+          onReport={handleReportRating}
+        />
       )}
 
       {/* Modal de denúncia */}
@@ -295,11 +307,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  listContent: {
+  resultsContainer: {
+    flex: 1,
     paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: 100,
-    flexGrow: 1,
   },
   providerCard: {
     backgroundColor: '#EBF5FF',
