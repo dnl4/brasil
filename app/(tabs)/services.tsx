@@ -22,6 +22,7 @@ import {
     deleteRating,
     formatWhatsappDisplay,
     getRatingsByService,
+    getRatingsByWhatsapp,
     getUniqueServices,
     Rating,
 } from '@/services/rating-service';
@@ -29,7 +30,7 @@ import {
 interface ProviderInfo {
   prestadorNome: string;
   prestadorWhatsapp: string;
-  servico: string;
+  servicos: string[];
   ratings: Rating[];
   averageRating: number;
 }
@@ -79,31 +80,24 @@ export default function ServicesScreen() {
     try {
       const results = await getRatingsByService(searchService.trim());
       
-      // Agrupa avaliações por prestador
-      const providerMap = new Map<string, ProviderInfo>();
+      // Encontra WhatsApps únicos
+      const uniqueWhatsapps = [...new Set(results.map(r => r.prestadorWhatsapp))];
       
-      results.forEach((rating) => {
-        const key = `${rating.prestadorWhatsapp}-${rating.servico}`;
+      // Para cada WhatsApp, busca TODAS as avaliações
+      const providersList: ProviderInfo[] = [];
+      
+      for (const whatsapp of uniqueWhatsapps) {
+        const allRatings = await getRatingsByWhatsapp(whatsapp);
+        const firstRating = results.find(r => r.prestadorWhatsapp === whatsapp)!;
         
-        if (providerMap.has(key)) {
-          const provider = providerMap.get(key)!;
-          provider.ratings.push(rating);
-        } else {
-          providerMap.set(key, {
-            prestadorNome: rating.prestadorNome,
-            prestadorWhatsapp: rating.prestadorWhatsapp,
-            servico: rating.servico,
-            ratings: [rating],
-            averageRating: 0,
-          });
-        }
-      });
-
-      // Calcula média de avaliações para cada prestador
-      const providersList = Array.from(providerMap.values()).map((provider) => ({
-        ...provider,
-        averageRating: calculateAverageRating(provider.ratings),
-      }));
+        providersList.push({
+          prestadorNome: firstRating.prestadorNome,
+          prestadorWhatsapp: whatsapp,
+          servicos: [...new Set(allRatings.map(r => r.servico))],
+          ratings: allRatings,
+          averageRating: calculateAverageRating(allRatings),
+        });
+      }
 
       // Ordena por média de avaliação (maior primeiro)
       providersList.sort((a, b) => b.averageRating - a.averageRating);
@@ -117,9 +111,25 @@ export default function ServicesScreen() {
     }
   };
 
-  const handleProviderPress = (provider: ProviderInfo) => {
-    setSelectedProvider(provider);
-    setRatingsModalVisible(true);
+  const handleProviderPress = async (provider: ProviderInfo) => {
+    try {
+      // Busca TODAS as avaliações deste WhatsApp
+      const allRatings = await getRatingsByWhatsapp(provider.prestadorWhatsapp);
+      
+      // Atualiza o provider com todas as avaliações
+      const updatedProvider = {
+        ...provider,
+        ratings: allRatings,
+        averageRating: calculateAverageRating(allRatings),
+        servicos: [...new Set(allRatings.map(r => r.servico))],
+      };
+      
+      setSelectedProvider(updatedProvider);
+      setRatingsModalVisible(true);
+    } catch (error) {
+      console.error('Erro ao buscar avaliações:', error);
+      show('Erro ao carregar avaliações.', { backgroundColor: '#ba1a1a' });
+    }
   };
 
   const handleEditRating = (rating: Rating) => {
@@ -142,22 +152,24 @@ export default function ServicesScreen() {
       if (updatedRatings.length === 0) {
         // Remove o provider se não tiver mais avaliações
         setProviders(providers.filter((p) => 
-          p.prestadorWhatsapp !== selectedProvider.prestadorWhatsapp || 
-          p.servico !== selectedProvider.servico
+          p.prestadorWhatsapp !== selectedProvider.prestadorWhatsapp
         ));
         setRatingsModalVisible(false);
         setSelectedProvider(null);
       } else {
+        // Recalcula lista de serviços únicos
+        const uniqueServices = [...new Set(updatedRatings.map(r => r.servico))];
+        
         // Atualiza o provider
         const updatedProvider = {
           ...selectedProvider,
           ratings: updatedRatings,
+          servicos: uniqueServices,
           averageRating: calculateAverageRating(updatedRatings),
         };
         setSelectedProvider(updatedProvider);
         setProviders(providers.map((p) => 
-          p.prestadorWhatsapp === selectedProvider.prestadorWhatsapp && 
-          p.servico === selectedProvider.servico ? updatedProvider : p
+          p.prestadorWhatsapp === selectedProvider.prestadorWhatsapp ? updatedProvider : p
         ));
       }
     } catch (error) {
@@ -179,7 +191,7 @@ export default function ServicesScreen() {
     >
       <View style={styles.providerInfo}>
         <Text style={styles.providerName}>{item.prestadorNome}</Text>
-        <Text style={styles.providerService}>{item.servico}</Text>
+        <Text style={styles.providerService}>{item.servicos.join(', ')}</Text>
         <Text style={styles.providerWhatsapp}>
           {formatWhatsappDisplay(item.prestadorWhatsapp)}
         </Text>
@@ -283,7 +295,7 @@ export default function ServicesScreen() {
       ) : (
         <FlatList
           data={providers}
-          keyExtractor={(item) => `${item.prestadorWhatsapp}-${item.servico}`}
+          keyExtractor={(item) => item.prestadorWhatsapp}
           renderItem={renderProviderCard}
           ListEmptyComponent={renderEmptyState}
           contentContainerStyle={styles.listContent}
