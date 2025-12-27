@@ -17,7 +17,7 @@ import { InputField } from '../../components/ui/input-field';
 import { PrimaryButton } from '../../components/ui/primary-button';
 import { useSnackbar } from '../../components/ui/snackbar';
 import { auth } from '../../firebaseConfig';
-import { updateUserProfile } from '../../services/user-service';
+import { isDisplayNameAvailable, updateUserProfile, validateDisplayNameFormat } from '../../services/user-service';
 
 export default function RegisterScreen() {
   const [displayName, setDisplayName] = useState('');
@@ -55,8 +55,9 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     // Validações
-    if (!displayName.trim()) {
-      show('Por favor, insira seu nome de exibição.', { backgroundColor: '#ba1a1a' });
+    const displayNameValidation = validateDisplayNameFormat(displayName);
+    if (!displayNameValidation.valid) {
+      show(displayNameValidation.error!, { backgroundColor: '#ba1a1a' });
       return;
     }
     if (!fullName.trim()) {
@@ -82,17 +83,27 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
+      // Verifica se o displayName está disponível
+      const isAvailable = await isDisplayNameAvailable(displayName);
+      if (!isAvailable) {
+        show('Este nome de exibição já está em uso', { backgroundColor: '#ba1a1a' });
+        setLoading(false);
+        return;
+      }
+
       // Criar usuário no Firebase
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       
+      const normalizedDisplayName = displayName.trim().toLowerCase();
+      
       // Atualizar o perfil com o nome de exibição
       await updateProfile(userCredential.user, {
-        displayName: displayName.trim(),
+        displayName: normalizedDisplayName,
       });
 
       // Salvar perfil completo no Firestore
       await updateUserProfile(userCredential.user.uid, {
-        displayName: displayName.trim(),
+        displayName: normalizedDisplayName,
         fullName: fullName.trim(),
         email: email.trim(),
         phoneNumber: phone.trim(),
@@ -158,12 +169,13 @@ export default function RegisterScreen() {
             <InputField
               label="Nome de exibição"
               value={displayName}
-              onChangeText={setDisplayName}
-              placeholder="Como você quer ser chamado"
-              autoCapitalize="words"
+              onChangeText={(text) => setDisplayName(text.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+              placeholder="usuario123"
+              autoCapitalize="none"
               autoCorrect={false}
               onFocusWithPosition={handleInputFocus}
-              helperText="Este nome será exibido publicamente nas suas avaliações"
+              helperText="Apenas letras e números, sem espaços (3-20 caracteres)"
+              maxLength={20}
             />
 
             {/* Full Name Field */}

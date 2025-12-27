@@ -27,7 +27,7 @@ import { Colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/firebaseConfig';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { getUserProfile, updateUserProfile } from '@/services/user-service';
+import { getUserProfile, isDisplayNameAvailable, updateUserProfile, validateDisplayNameFormat } from '@/services/user-service';
 
 export default function ContactSettingsScreen() {
   const { user } = useAuth();
@@ -71,8 +71,9 @@ export default function ContactSettingsScreen() {
     if (!auth.currentUser || !user) return;
 
     // Validações
-    if (!displayName.trim()) {
-      snackbar.show('Nome de exibição é obrigatório', { backgroundColor: '#F44336' });
+    const displayNameValidation = validateDisplayNameFormat(displayName);
+    if (!displayNameValidation.valid) {
+      snackbar.show(displayNameValidation.error!, { backgroundColor: '#F44336' });
       return;
     }
 
@@ -83,9 +84,17 @@ export default function ContactSettingsScreen() {
 
     setLoading(true);
     try {
+      // Verifica se o displayName está disponível
+      const isAvailable = await isDisplayNameAvailable(displayName, user.uid);
+      if (!isAvailable) {
+        snackbar.show('Este nome de exibição já está em uso', { backgroundColor: '#F44336' });
+        setLoading(false);
+        return;
+      }
+
       // Atualizar perfil no Firestore
       await updateUserProfile(user.uid, {
-        displayName: displayName.trim(),
+        displayName: displayName.trim().toLowerCase(),
         fullName: fullName.trim(),
         email: email.trim(),
         phoneNumber: phone.trim(),
@@ -150,13 +159,15 @@ export default function ContactSettingsScreen() {
                 },
               ]}
               value={displayName}
-              onChangeText={setDisplayName}
-              placeholder="Como você quer ser chamado"
+              onChangeText={(text) => setDisplayName(text.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+              placeholder="usuario123"
               placeholderTextColor={isDark ? '#666' : '#999'}
-              autoCapitalize="words"
+              autoCapitalize="none"
+              autoCorrect={false}
+              maxLength={20}
             />
             <ThemedText style={styles.helperText}>
-              Este nome será exibido nas suas avaliações
+              Apenas letras e números, sem espaços (3-20 caracteres)
             </ThemedText>
           </View>
 
