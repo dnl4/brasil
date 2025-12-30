@@ -1,4 +1,16 @@
-import { validateDisplayNameFormat } from '../services/user-service';
+import { getDocs, query, where } from 'firebase/firestore';
+import { isDisplayNameAvailable, validateDisplayNameFormat } from '../services/user-service';
+
+jest.mock('@/firebaseConfig', () => ({
+  db: {},
+}));
+
+jest.mock('firebase/firestore', () => ({
+  collection: jest.fn(),
+  getDocs: jest.fn(),
+  query: jest.fn(),
+  where: jest.fn(),
+}));
 
 describe('validateDisplayNameFormat', () => {
   it('deve aceitar username com apenas letras minúsculas', () => {
@@ -59,6 +71,56 @@ describe('validateDisplayNameFormat', () => {
   it('deve rejeitar username com mais de 20 caracteres', () => {
     const result = validateDisplayNameFormat('abcdefghijklmnopqrstuvwxyz');
     expect(result.valid).toBe(false);
+  });
+});
+
+describe('isDisplayNameAvailable', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('deve retornar false quando dois usuários tentam usar o mesmo username', async () => {
+    const displayName = 'usuario123';
+    
+    // Mock para simular que já existe um usuário com esse displayName
+    (getDocs as jest.Mock).mockResolvedValue({
+      empty: false,
+      docs: [{ id: 'user1' }],
+    });
+
+    // Tenta verificar disponibilidade para um segundo usuário
+    const available = await isDisplayNameAvailable(displayName, 'user2');
+    
+    expect(available).toBe(false);
+    expect(query).toHaveBeenCalled();
+    expect(where).toHaveBeenCalledWith('displayName', '==', 'usuario123');
+  });
+
+  it('deve retornar true quando o username não está em uso', async () => {
+    const displayName = 'novouser';
+    
+    (getDocs as jest.Mock).mockResolvedValue({
+      empty: true,
+      docs: [],
+    });
+
+    const available = await isDisplayNameAvailable(displayName);
+    
+    expect(available).toBe(true);
+  });
+
+  it('deve permitir que o mesmo usuário mantenha seu próprio username', async () => {
+    const displayName = 'usuario123';
+    const userId = 'user1';
+    
+    (getDocs as jest.Mock).mockResolvedValue({
+      empty: false,
+      docs: [{ id: 'user1' }],
+    });
+
+    const available = await isDisplayNameAvailable(displayName, userId);
+    
+    expect(available).toBe(true);
   });
 });
 
