@@ -1,5 +1,3 @@
-import { CustomDialog } from '@/components/ui/custom-dialog';
-import { useSnackbar } from '@/components/ui/snackbar';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -46,12 +44,9 @@ const DOCUMENTS: DocumentInfo[] = [
 
 export default function DocumentosScreen() {
   const { user } = useAuth();
-  const { show } = useSnackbar();
   // Estado começa vazio e é carregado do cache local instantaneamente
   const [completedItems, setCompletedItems] = useState<Record<string, boolean>>({});
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const toggleExpanded = (id: string) => {
     setExpandedItems(prev => ({ ...prev, [id]: !prev[id] }));
@@ -119,44 +114,6 @@ export default function DocumentosScreen() {
     }
   };
 
-  const saveToFirebase = async () => {
-    if (!user) return;
-    try {
-      const docRef = doc(db, 'users', user.uid);
-      await setDoc(docRef, { documents: completedItems }, { merge: true });
-      setShowSuccessDialog(true);
-    } catch (error) {
-      console.error('Erro ao salvar documentos:', error);
-      show('Erro ao salvar documentos. Tente novamente.', { backgroundColor: '#ba1a1a' });
-    }
-  };
-
-  const loadFromFirebase = async () => {
-    if (!user) return;
-    setIsSyncing(true);
-    try {
-      const docRef = doc(db, 'users', user.uid);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const savedDocuments = docSnap.data().documents;
-        if (savedDocuments) {
-          setCompletedItems(savedDocuments);
-          // Atualiza o cache local
-          await saveToCache(savedDocuments);
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao carregar documentos:', error);
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  const clearCheckboxes = async () => {
-    setCompletedItems({});
-    // Limpa também o cache local
-    await saveToCache({});
-  };
 
   return (
     <View style={styles.container}>
@@ -164,17 +121,6 @@ export default function DocumentosScreen() {
         <Text style={styles.headerTitle}>Documentos</Text>
       </View>
 
-      <View style={styles.actionButtons}>
-        <TouchableOpacity style={styles.actionButton} onPress={saveToFirebase}>
-          <Text style={styles.actionButtonText}>Salvar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.loadButton]} onPress={loadFromFirebase} disabled={isSyncing}>
-          <Text style={styles.actionButtonText}>{isSyncing ? 'Carregando...' : 'Carregar'}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.clearButton]} onPress={clearCheckboxes}>
-          <Text style={[styles.actionButtonText, styles.clearButtonText]}>Limpar</Text>
-        </TouchableOpacity>
-      </View>
       
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {DOCUMENTS.map((item, index) => (
@@ -222,14 +168,6 @@ export default function DocumentosScreen() {
           </View>
         ))}
       </ScrollView>
-
-      {/* Dialog de sucesso */}
-      <CustomDialog
-        visible={showSuccessDialog}
-        title="Documentos salvos!"
-        message="Seus documentos foram sincronizados com sucesso."
-        onClose={() => setShowSuccessDialog(false)}
-      />
     </View>
   );
 }
@@ -251,37 +189,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: '#111827',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    gap: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: '#22C55E',
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  loadButton: {
-    backgroundColor: '#3B82F6',
-  },
-  clearButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-  },
-  actionButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  clearButtonText: {
-    color: '#6B7280',
   },
   scrollView: {
     flex: 1,
