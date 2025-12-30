@@ -1,0 +1,114 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Função auxiliar para verificar se o usuário está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Função auxiliar para verificar se o usuário é o dono do recurso
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Função auxiliar para validar campos obrigatórios
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    // ============================================
+    // COLEÇÃO: users
+    // Perfis de usuários
+    // ============================================
+    match /users/{userId} {
+      // Permitir leitura se estiver autenticado
+      allow read: if isAuthenticated();
+      
+      // Permitir criação apenas do próprio perfil
+      allow create: if isOwner(userId) 
+                    && hasRequiredFields(['displayName', 'fullName', 'email'])
+                    && request.resource.data.displayName is string
+                    && request.resource.data.displayName.size() >= 3
+                    && request.resource.data.displayName.size() <= 20
+                    && request.resource.data.displayName.matches('^[a-z0-9]+$')
+                    && request.resource.data.fullName is string
+                    && request.resource.data.fullName.size() > 0
+                    && request.resource.data.email is string
+                    && request.resource.data.email.matches('^[\\w\\.-]+@[\\w\\.-]+\\.\\w+$');
+      
+      // Permitir atualização apenas do próprio perfil
+      allow update: if isOwner(userId)
+                    && request.resource.data.displayName is string
+                    && request.resource.data.displayName.size() >= 3
+                    && request.resource.data.displayName.size() <= 20
+                    && request.resource.data.displayName.matches('^[a-z0-9]+$')
+                    && request.resource.data.fullName is string
+                    && request.resource.data.fullName.size() > 0;
+      
+      // Permitir exclusão apenas do próprio perfil
+      allow delete: if isOwner(userId);
+    }
+    
+    // ============================================
+    // COLEÇÃO: ratings
+    // Avaliações de prestadores de serviços
+    // ============================================
+    match /ratings/{ratingId} {
+      // Permitir leitura se estiver autenticado
+      allow read: if isAuthenticated();
+      
+      // Permitir criação se estiver autenticado e for o próprio usuário
+      allow create: if isAuthenticated()
+                    && hasRequiredFields(['prestadorWhatsapp', 'prestadorNome', 'servico', 'rating', 'comment', 'userId', 'userName'])
+                    && isOwner(request.resource.data.userId)
+                    && request.resource.data.rating is number
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5
+                    && request.resource.data.prestadorWhatsapp is string
+                    && request.resource.data.prestadorWhatsapp.size() > 0
+                    && request.resource.data.prestadorNome is string
+                    && request.resource.data.prestadorNome.size() > 0
+                    && request.resource.data.servico is string
+                    && request.resource.data.servico.size() > 0
+                    && request.resource.data.comment is string
+                    && request.resource.data.userName is string;
+      
+      // Permitir atualização apenas do próprio rating
+      allow update: if isAuthenticated()
+                    && isOwner(resource.data.userId)
+                    && request.resource.data.userId == resource.data.userId
+                    && request.resource.data.prestadorWhatsapp == resource.data.prestadorWhatsapp
+                    && request.resource.data.rating is number
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5;
+      
+      // Permitir exclusão apenas do próprio rating
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+    
+    // ============================================
+    // COLEÇÃO: reports
+    // Denúncias de avaliações
+    // ============================================
+    match /reports/{reportId} {
+      // Permitir leitura apenas para administradores (no frontend não há leitura direta)
+      allow read: if false;
+      
+      // Permitir criação se estiver autenticado e for o próprio usuário
+      allow create: if isAuthenticated()
+                    && hasRequiredFields(['ratingId', 'reporterId', 'reason'])
+                    && isOwner(request.resource.data.reporterId)
+                    && request.resource.data.reason in ['fake', 'offensive', 'spam', 'other']
+                    && request.resource.data.ratingId is string
+                    && request.resource.data.ratingId.size() > 0;
+      
+      // Não permitir atualização de denúncias
+      allow update: if false;
+      
+      // Não permitir exclusão de denúncias (apenas admin via console)
+      allow delete: if false;
+    }
+  }
+}
