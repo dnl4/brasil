@@ -10,10 +10,12 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
   TextInput,
+  TouchableWithoutFeedback,
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,6 +30,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/firebaseConfig';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getUserProfile, isDisplayNameAvailable, updateUserProfile, validateDisplayNameFormat } from '@/services/user-service';
+import { generateVerificationCode, sendVerificationCode, storeVerificationCode, verifyCode } from '@/services/whatsapp-service';
 
 export default function ContactSettingsScreen() {
   const { user } = useAuth();
@@ -42,9 +45,14 @@ export default function ContactSettingsScreen() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phoneNumber || '');
+  const [originalPhone, setOriginalPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [inputCode, setInputCode] = useState('');
+  const [sendingCode, setSendingCode] = useState(false);
 
   useEffect(() => {
     loadUserProfile();
@@ -60,6 +68,7 @@ export default function ContactSettingsScreen() {
         setDisplayName(profile.displayName || '');
         setFullName(profile.fullName || '');
         setPhone(profile.phoneNumber || '');
+        setOriginalPhone(profile.phoneNumber || '');
       }
     } catch (error) {
       console.error('Erro ao carregar perfil:', error);
@@ -83,6 +92,12 @@ export default function ContactSettingsScreen() {
       return;
     }
 
+    // Se telefone mudou, requer verificação
+    if (phone.trim() !== originalPhone && phone.trim()) {
+      await sendVerificationToPhone();
+      return;
+    }
+
     setLoading(true);
     try {
       // Verifica se o displayName está disponível
@@ -93,25 +108,7 @@ export default function ContactSettingsScreen() {
         return;
       }
 
-      // Atualizar perfil no Firestore
-      await updateUserProfile(user.uid, {
-        displayName: displayName.trim().toLowerCase(),
-        fullName: fullName.trim(),
-        email: email.trim(),
-        phoneNumber: phone.trim(),
-      });
-
-      // Atualizar perfil no Firebase Auth
-      await updateProfile(auth.currentUser, {
-        displayName: displayName.trim().toLowerCase(),
-      });
-
-      // Atualizar e-mail se foi alterado
-      if (email !== user?.email && email.trim()) {
-        await updateEmail(auth.currentUser, email.trim());
-      }
-
-      setShowSuccessDialog(true);
+      await saveProfile();
     } catch (error: any) {
       console.error('Erro ao atualizar:', error);
       let errorMessage = 'Erro ao atualizar informações';
@@ -128,6 +125,79 @@ export default function ContactSettingsScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const sendVerificationToPhone = async () => {
+    if (!phone.trim()) return;
+
+    setSendingCode(true);
+    try {
+      const code = generateVerificationCode();
+      setVerificationCode(code);
+      storeVerificationCode(phone, code);
+      
+      await sendVerificationCode(phone, code);
+      
+      setShowVerificationDialog(true);
+      snackbar.show('Código enviado via WhatsApp!', { backgroundColor: '#4CAF50' });
+    } catch (error) {
+      console.error('Erro ao enviar código:', error);
+      snackbar.show('Erro ao enviar código de verificação', { backgroundColor: '#F44336' });
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!inputCode.trim()) {
+      snackbar.show('Digite o código recebido', { backgroundColor: '#F44336' });
+      return;
+    }
+
+    const isValid = verifyCode(phone, inputCode.trim());
+    
+    if (!isValid) {
+      snackbar.show('Código inválido ou expirado', { backgroundColor: '#F44336' });
+      return;
+    }
+
+    setShowVerificationDialog(false);
+    setInputCode('');
+    
+    setLoading(true);
+    try {
+      await saveProfile();
+    } catch (error) {
+      console.error('Erro ao salvar:', error);
+      snackbar.show('Erro ao salvar informações', { backgroundColor: '#F44336' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveProfile = async () => {
+    if (!auth.currentUser || !user) return;
+
+    // Atualizar perfil no Firestore
+    await updateUserProfile(user.uid, {
+      displayName: displayName.trim().toLowerCase(),
+      fullName: fullName.trim(),
+      email: email.trim(),
+      phoneNumber: phone.trim(),
+    });
+
+    // Atualizar perfil no Firebase Auth
+    await updateProfile(auth.currentUser, {
+      displayName: displayName.trim().toLowerCase(),
+    });
+
+    // Atualizar e-mail se foi alterado
+    if (email !== user?.email && email.trim()) {
+      await updateEmail(auth.currentUser, email.trim());
+    }
+
+    setOriginalPhone(phone.trim());
+    setShowSuccessDialog(true);
   };
 
   if (loadingProfile) {
@@ -281,6 +351,67 @@ export default function ContactSettingsScreen() {
           setShowSuccessDialog(false);
         }}
       />
+
+      {/* Modal de verificação com input */}
+      <Modal
+        visible={showVerificationDialog}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setShowVerificationDialog(false);
+          setInputCode('');
+        }}
+      >
+        <TouchableWithoutFeedback>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={[styles.modalContent, { backgroundColor: isDark ? '#1f1f1f' : '#fff' }]}>
+                <ThemedText style={styles.modalTitle}>Verificação WhatsApp</ThemedText>
+                <ThemedText style={styles.modalMessage}>
+                  Digite o código de 6 dígitos enviado para {phone}
+                </ThemedText>
+
+                <TextInput
+                  style={[
+                    styles.codeInput,
+                    {
+                      backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+                      borderColor: isDark ? '#444' : '#e5e5e5',
+                      color: colors.text,
+                    },
+                  ]}
+                  value={inputCode}
+                  onChangeText={setInputCode}
+                  placeholder="000000"
+                  placeholderTextColor={isDark ? '#666' : '#999'}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  autoFocus
+                />
+
+                <View style={styles.modalButtons}>
+                  <View style={styles.modalButton}>
+                    <PrimaryButton
+                      title="Cancelar"
+                      onPress={() => {
+                        setShowVerificationDialog(false);
+                        setInputCode('');
+                      }}
+                      style={styles.cancelButtonStyle}
+                    />
+                  </View>
+                  <View style={styles.modalButton}>
+                    <PrimaryButton
+                      title="Verificar"
+                      onPress={handleVerifyCode}
+                    />
+                  </View>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </ThemedView>
   );
 }
@@ -330,5 +461,54 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalMessage: {
+    fontSize: 16,
+    opacity: 0.7,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  codeInput: {
+    width: '100%',
+    height: 60,
+    borderWidth: 2,
+    borderRadius: 12,
+    textAlign: 'center',
+    fontSize: 24,
+    letterSpacing: 8,
+    fontWeight: '600',
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+  },
+  cancelButtonStyle: {
+    backgroundColor: '#6B7280',
   },
 });
