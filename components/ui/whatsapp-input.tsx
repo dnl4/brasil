@@ -21,6 +21,7 @@ interface WhatsappInputProps {
   readonly?: boolean;
   error?: string;
   isDark?: boolean;
+  testID?: string;
 }
 
 export function WhatsappInput({
@@ -31,6 +32,7 @@ export function WhatsappInput({
   readonly = false,
   error,
   isDark = false,
+  testID,
 }: WhatsappInputProps) {
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<Country>(getDefaultCountry());
@@ -161,6 +163,7 @@ export function WhatsappInput({
 
         {/* Input do número */}
         <TextInput
+          testID={testID}
           style={[styles.input, isDark && styles.inputDark]}
           value={localValue}
           onChangeText={handleTextChange}

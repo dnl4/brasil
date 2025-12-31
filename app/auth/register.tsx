@@ -18,7 +18,7 @@ import { PrimaryButton } from '../../components/ui/primary-button';
 import { useSnackbar } from '../../components/ui/snackbar';
 import { WhatsappInput } from '../../components/ui/whatsapp-input';
 import { auth } from '../../firebaseConfig';
-import { isDisplayNameAvailable, updateUserProfile, validateDisplayNameFormat } from '../../services/user-service';
+import { isDisplayNameAvailable, isPhoneNumberAvailable, updateUserProfile, validateDisplayNameFormat } from '../../services/user-service';
 
 export default function RegisterScreen() {
   const [displayName, setDisplayName] = useState('');
@@ -90,6 +90,16 @@ export default function RegisterScreen() {
         show('Este nome de exibição já está em uso', { backgroundColor: '#ba1a1a' });
         setLoading(false);
         return;
+      }
+
+      // Verifica se o WhatsApp está disponível
+      if (phone.trim()) {
+        const isPhoneAvailable = await isPhoneNumberAvailable(phone.trim());
+        if (!isPhoneAvailable) {
+          show('Este WhatsApp já está em uso', { backgroundColor: '#ba1a1a' });
+          setLoading(false);
+          // return;
+        }
       }
 
       // Criar usuário no Firebase
@@ -168,6 +178,7 @@ export default function RegisterScreen() {
           <View style={styles.form}>
             {/* Display Name Field */}
             <InputField
+              testID="displayname-input"
               label="Nome de exibição"
               value={displayName}
               onChangeText={(text) => setDisplayName(text.toLowerCase().replace(/[^a-z0-9]/g, ''))}
@@ -181,6 +192,7 @@ export default function RegisterScreen() {
 
             {/* Full Name Field */}
             <InputField
+              testID="fullname-input"
               label="Nome completo"
               value={fullName}
               onChangeText={setFullName}
@@ -193,6 +205,7 @@ export default function RegisterScreen() {
 
             {/* Email Field */}
             <InputField
+              testID="email-input"
               label="Email"
               value={email}
               onChangeText={setEmail}
@@ -205,6 +218,7 @@ export default function RegisterScreen() {
 
             {/* WhatsApp Field */}
             <WhatsappInput
+              testID="whatsapp-input"
               label="WhatsApp"
               value={phone}
               onChangeValue={setPhone}
@@ -214,6 +228,7 @@ export default function RegisterScreen() {
 
             {/* Password Field */}
             <InputField
+              testID="password-input"
               label="Senha"
               value={password}
               onChangeText={setPassword}
@@ -224,6 +239,7 @@ export default function RegisterScreen() {
 
             {/* Confirm Password Field */}
             <InputField
+              testID="confirm-password-input"
               label="Confirmação de senha"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -234,6 +250,7 @@ export default function RegisterScreen() {
 
             {/* Register Button */}
             <PrimaryButton
+              testID="register-button"
               title="Criar conta"
               onPress={handleRegister}
               loading={loading}

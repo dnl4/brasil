@@ -65,6 +65,30 @@ export async function isDisplayNameAvailable(displayName: string, currentUserId?
 }
 
 /**
+ * Verifica se o número de WhatsApp já está em uso por outro usuário
+ */
+export async function isPhoneNumberAvailable(phoneNumber: string, currentUserId?: string): Promise<boolean> {
+  const normalized = phoneNumber.trim();
+  
+  if (!normalized) return true;
+  
+  const q = query(
+    collection(db, USERS_COLLECTION),
+    where('phoneNumber', '==', normalized)
+  );
+  
+  const snapshot = await getDocs(q);
+  
+  if (snapshot.empty) return true;
+  
+  if (currentUserId) {
+    return snapshot.docs.every(doc => doc.id === currentUserId);
+  }
+  
+  return false;
+}
+
+/**
  * Cria ou atualiza o perfil do usuário
  */
 export async function updateUserProfile(
