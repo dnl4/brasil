@@ -23,3 +23,4 @@ jest.mock('firebase/auth', () => ({
   updateProfile: jest.fn(),
 }));
 
+
