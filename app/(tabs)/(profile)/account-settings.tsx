@@ -5,7 +5,7 @@ import {
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { useRouter } from 'expo-router';
-import { updateEmail } from 'firebase/auth';
+import { updateEmail, updateProfile } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -99,6 +99,11 @@ export default function ContactSettingsScreen() {
         fullName: fullName.trim(),
         email: email.trim(),
         phoneNumber: phone.trim(),
+      });
+
+      // Atualizar perfil no Firebase Auth
+      await updateProfile(auth.currentUser, {
+        displayName: displayName.trim().toLowerCase(),
       });
 
       // Atualizar e-mail se foi alterado
