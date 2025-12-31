@@ -14,6 +14,7 @@ interface PrimaryButtonProps {
   disabled?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  testID?: string;
 }
 
 export function PrimaryButton({
@@ -23,11 +24,13 @@ export function PrimaryButton({
   disabled = false,
   style,
   textStyle,
+  testID,
 }: PrimaryButtonProps) {
   const isDisabled = disabled || loading;
 
   return (
     <TouchableOpacity
+      testID={testID}
       style={[
         styles.button,
         isDisabled && styles.buttonDisabled,

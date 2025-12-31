@@ -4,13 +4,13 @@ import { router } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useRef, useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -68,7 +68,15 @@ export default function LoginScreen() {
     setHoldRedirect(true);
     
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      
+      if (!userCredential.user.emailVerified) {
+        await auth.signOut();
+        setHoldRedirect(false);
+        show('Por favor, verifique seu email antes de fazer login.', { backgroundColor: '#ba1a1a' });
+        return;
+      }
+      
       setShowSuccessDialog(true);
     } catch (error: any) {
       // Libera o redirect em caso de erro
@@ -150,10 +158,10 @@ export default function LoginScreen() {
           <View style={styles.form}>
             {/* Email Field */}
             <InputField
+              testID="email-input"
               label="Email"
               value={email}
               onChangeText={setEmail}
-              placeholder="seu@email.com"
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -162,16 +170,17 @@ export default function LoginScreen() {
 
             {/* Password Field */}
             <InputField
+              testID="password-input"
               label="Senha"
               value={password}
               onChangeText={setPassword}
-              placeholder="••••••••"
               secureTextEntry
               onFocusWithPosition={handleInputFocus}
             />
 
             {/* Login Button */}
             <PrimaryButton
+              testID="login-button"
               title="Entrar"
               onPress={handleLogin}
               loading={isLoading}
