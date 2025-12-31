@@ -1,14 +1,23 @@
 import { FileAttachmentIcon, MessageSearch01Icon, StarIcon, UserIcon, UserSearch01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
+import { useAuth } from '@/contexts/auth-context';
+import EmailNotVerifiedScreen from './email-not-verified';
 
 export default function TabLayout() {
   const activeColor = '#0066FF';
   const inactiveColor = '#9CA3AF';
+  const { user } = useAuth();
+  if (!user) {
+    return <Redirect href="/auth/login" />;
+  }
 
+  if (!user?.emailVerified) {
+    return <EmailNotVerifiedScreen />;
+  }
   return (
     <Tabs
       screenOptions={{
@@ -52,6 +61,12 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="explore"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="email-not-verified"
         options={{
           href: null,
         }}
