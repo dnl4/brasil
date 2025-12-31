@@ -1,26 +1,25 @@
-const WHATSAPP_API_VERSION = 'v21.0';
+const WHATSAPP_API_VERSION = 'v24.0';
 const WHATSAPP_API_URL = `https://graph.facebook.com/${WHATSAPP_API_VERSION}`;
 
 const ACCESS_TOKEN = process.env.EXPO_PUBLIC_WHATSAPP_ACCESS_TOKEN!;
 const PHONE_NUMBER_ID = process.env.EXPO_PUBLIC_WHATSAPP_PHONE_NUMBER_ID!;
-const BUSINESS_ACCOUNT_ID = process.env.EXPO_PUBLIC_WHATSAPP_BUSINESS_ACCOUNT_ID!;
 
-interface WhatsAppMessage {
-  to: string; // número com código do país, ex: 5561999999999
-  type: 'text' | 'template' | 'image' | 'document' | 'audio' | 'video';
-  text?: {
-    body: string;
-  };
-  template?: {
-    name: string;
-    language: {
-      code: string;
-    };
-    components?: any[];
-  };
+interface TemplateComponent {
+  type: 'body' | 'header' | 'button';
+  parameters?: {
+    type: 'text';
+    text: string;
+  }[];
+  sub_type?: 'url' | 'quick_reply';
+  index?: string;
 }
 
-export async function sendWhatsAppMessage(message: WhatsAppMessage) {
+export async function sendTemplateMessage(
+  to: string,
+  templateName: string,
+  languageCode: string = 'en',
+  components?: TemplateComponent[]
+) {
   try {
     const response = await fetch(
       `${WHATSAPP_API_URL}/${PHONE_NUMBER_ID}/messages`,
@@ -32,8 +31,13 @@ export async function sendWhatsAppMessage(message: WhatsAppMessage) {
         },
         body: JSON.stringify({
           messaging_product: 'whatsapp',
-          recipient_type: 'individual',
-          ...message,
+          to,
+          type: 'template',
+          template: {
+            name: templateName,
+            language: { code: languageCode },
+            components: components || [],
+          },
         }),
       }
     );
@@ -46,34 +50,9 @@ export async function sendWhatsAppMessage(message: WhatsAppMessage) {
 
     return data;
   } catch (error) {
-    console.error('Erro ao enviar mensagem WhatsApp:', error);
+    console.error('Erro ao enviar template WhatsApp:', error);
     throw error;
   }
-}
-
-export async function sendTextMessage(to: string, text: string) {
-  return sendWhatsAppMessage({
-    to,
-    type: 'text',
-    text: { body: text },
-  });
-}
-
-export async function sendTemplateMessage(
-  to: string,
-  templateName: string,
-  languageCode: string = 'pt_BR',
-  components?: any[]
-) {
-  return sendWhatsAppMessage({
-    to,
-    type: 'template',
-    template: {
-      name: templateName,
-      language: { code: languageCode },
-      components,
-    },
-  });
 }
 
 export async function markMessageAsRead(messageId: string) {
@@ -142,11 +121,36 @@ export function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Envia código de verificação via WhatsApp
+// Envia código de verificação via WhatsApp usando template 'verify_code'
+// IMPORTANTE: Template deve estar previamente criado no Meta Business Manager
 export async function sendVerificationCode(phoneNumber: string, code: string) {
-  const message = `Seu código de verificação é: *${code}*\n\nEste código expira em 5 minutos.\n\nSe você não solicitou este código, ignore esta mensagem.`;
-  
-  return sendTextMessage(phoneNumber, message);
+  return sendTemplateMessage(
+    phoneNumber,
+    'verify_code',
+    'en',
+    [
+      {
+        type: 'body',
+        parameters: [
+          {
+            type: 'text',
+            text: code,
+          },
+        ],
+      },
+      {
+        type: 'button',
+        sub_type: 'url',
+        index: '0',
+        parameters: [
+          {
+            type: 'text',
+            text: code,
+          },
+        ],
+      },
+    ]
+  );
 }
 
 // Armazena códigos de verificação temporariamente (em produção use Redis ou Firestore)
@@ -174,4 +178,3 @@ export function verifyCode(phoneNumber: string, inputCode: string): boolean {
   
   return false;
 }
-
