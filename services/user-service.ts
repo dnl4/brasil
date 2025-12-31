@@ -1,5 +1,5 @@
-import { collection, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db } from '@/firebaseConfig';
+import { collection, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
 
 export interface UserProfile {
   userId: string;
@@ -80,14 +80,26 @@ export async function updateUserProfile(
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
+    // Documento existe - fazer update parcial
+    console.log('Updating user profile:', data);
     await updateDoc(docRef, {
       ...data,
       updatedAt: new Date(),
     });
   } else {
+    console.log('Creating user profile:', data);
+    // Documento não existe - criar com campos obrigatórios
+    // Valida se tem os campos obrigatórios antes de criar
+    if (!data.displayName || !data.fullName || !data.email) {
+      throw new Error('Campos obrigatórios ausentes: displayName, fullName e email são necessários para criar um perfil');
+    }
+    
     await setDoc(docRef, {
       userId,
-      ...data,
+      displayName: data.displayName,
+      fullName: data.fullName,
+      email: data.email,
+      phoneNumber: data.phoneNumber || '',
       createdAt: new Date(),
       updatedAt: new Date(),
     });

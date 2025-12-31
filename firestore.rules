@@ -23,29 +23,20 @@ service cloud.firestore {
     // Perfis de usuários
     // ============================================
     match /users/{userId} {
-      // Permitir leitura se estiver autenticado
-      allow read: if isAuthenticated();
+      // Permitir leitura pública (dados de perfil são públicos)
+      allow read: if true;
       
-      // Permitir criação apenas do próprio perfil
-      allow create: if isOwner(userId) 
-                    && hasRequiredFields(['displayName', 'fullName', 'email'])
-                    && request.resource.data.displayName is string
-                    && request.resource.data.displayName.size() >= 3
-                    && request.resource.data.displayName.size() <= 20
-                    && request.resource.data.displayName.matches('^[a-z0-9]+$')
-                    && request.resource.data.fullName is string
-                    && request.resource.data.fullName.size() > 0
-                    && request.resource.data.email is string
-                    && request.resource.data.email.matches('^[\\w\\.-]+@[\\w\\.-]+\\.\\w+$');
-      
-      // Permitir atualização apenas do próprio perfil
-      allow update: if isOwner(userId)
-                    && request.resource.data.displayName is string
-                    && request.resource.data.displayName.size() >= 3
-                    && request.resource.data.displayName.size() <= 20
-                    && request.resource.data.displayName.matches('^[a-z0-9]+$')
-                    && request.resource.data.fullName is string
-                    && request.resource.data.fullName.size() > 0;
+      // Permitir criação e atualização apenas do próprio perfil
+      allow write: if isOwner(userId)
+                   && hasRequiredFields(['displayName', 'fullName', 'email'])
+                   && request.resource.data.displayName is string
+                   && request.resource.data.displayName.size() >= 3
+                   && request.resource.data.displayName.size() <= 20
+                   && request.resource.data.displayName.matches('^[a-z0-9]+$')
+                   && request.resource.data.fullName is string
+                   && request.resource.data.fullName.size() > 0
+                   && request.resource.data.email is string
+                   && request.resource.data.email.matches('^[\\w\\.+-]+@[\\w\\.-]+\\.\\w+$');
       
       // Permitir exclusão apenas do próprio perfil
       allow delete: if isOwner(userId);
