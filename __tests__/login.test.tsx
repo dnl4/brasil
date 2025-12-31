@@ -54,7 +54,7 @@ describe('LoginScreen', () => {
 
   it('não permite login se email não estiver verificado', async () => {
     (signInWithEmailAndPassword as jest.Mock).mockResolvedValue({
-      user: { emailVerified: false },
+      user: {emailVerified: false },
     });
 
     render(<LoginScreen />);
@@ -65,7 +65,8 @@ describe('LoginScreen', () => {
 
     await waitFor(() => {
       expect(mockShow).toHaveBeenCalledWith(
-        'Por favor, verifique seu email antes de fazer login.'
+        'Por favor, verifique seu email antes de fazer login.',
+        { backgroundColor: '#ba1a1a' }
       );
     });
   });
