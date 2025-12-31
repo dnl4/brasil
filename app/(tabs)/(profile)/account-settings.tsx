@@ -25,6 +25,7 @@ import { ThemedView } from '@/components/themed-view';
 import { CustomDialog } from '@/components/ui/custom-dialog';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { useSnackbar } from '@/components/ui/snackbar';
+import { WhatsappInput } from '@/components/ui/whatsapp-input';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/firebaseConfig';
@@ -298,29 +299,17 @@ export default function ContactSettingsScreen() {
             />
           </View>
 
-          {/* Phone Field */}
-          <View style={styles.fieldContainer}>
-            <View style={styles.labelRow}>
-              <HugeiconsIcon icon={Call02Icon} size={20} color={colors.icon} />
-              <ThemedText style={styles.label}>Telefone</ThemedText>
-            </View>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: isDark ? '#1a1a1a' : '#fff',
-                  borderColor: isDark ? '#333' : '#e5e5e5',
-                  color: colors.text,
-                },
-              ]}
+          {/* WhatsApp Field */}
+          <View style={styles.phoneFieldContainer}>
+            <WhatsappInput
               value={phone}
-              onChangeText={setPhone}
-              placeholder="Digite seu telefone"
-              placeholderTextColor={isDark ? '#666' : '#999'}
-              keyboardType="phone-pad"
+              onChangeValue={setPhone}
+              label="WhatsApp"
+              placeholder="Digite seu WhatsApp"
+              isDark={isDark}
             />
             <ThemedText style={styles.helperText}>
-              A alteração do telefone pode requerer verificação por Whatsapp
+              A alteração do WhatsApp pode requerer verificação
             </ThemedText>
           </View>
 
@@ -436,6 +425,9 @@ const styles = StyleSheet.create({
   },
   fieldContainer: {
     marginBottom: 24,
+  },
+  phoneFieldContainer: {
+    marginBottom: 8,
   },
   labelRow: {
     flexDirection: 'row',

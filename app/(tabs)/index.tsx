@@ -3,12 +3,11 @@ import { HugeiconsIcon } from '@hugeicons/react-native';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSnackbar } from '../../components/ui/snackbar';
@@ -18,11 +17,11 @@ import { ReportModal } from '@/components/ui/report-modal';
 import { WhatsappInput } from '@/components/ui/whatsapp-input';
 import { useAuth } from '@/contexts/auth-context';
 import {
-    calculateAverageRating,
-    deleteRating,
-    formatWhatsappDisplay,
-    getRatingsByWhatsapp,
-    Rating,
+  calculateAverageRating,
+  deleteRating,
+  formatWhatsappDisplay,
+  getRatingsByWhatsapp,
+  Rating,
 } from '@/services/rating-service';
 
 export default function HomeScreen() {
@@ -187,7 +186,7 @@ export default function HomeScreen() {
         <WhatsappInput
           value={searchWhatsapp}
           onChangeValue={setSearchWhatsapp}
-          label="Número do prestador"
+          label="WhatsApp do prestador"
         />
         <TouchableOpacity
           style={[styles.searchButton, isSearching && styles.searchButtonDisabled]}

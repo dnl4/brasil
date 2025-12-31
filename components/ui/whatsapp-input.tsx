@@ -17,16 +17,20 @@ interface WhatsappInputProps {
   value: string;
   onChangeValue: (fullNumber: string) => void;
   label?: string;
+  placeholder?: string;
   readonly?: boolean;
   error?: string;
+  isDark?: boolean;
 }
 
 export function WhatsappInput({
   value,
   onChangeValue,
   label = 'WhatsApp',
+  placeholder,
   readonly = false,
   error,
+  isDark = false,
 }: WhatsappInputProps) {
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<Country>(getDefaultCountry());
@@ -128,11 +132,17 @@ export function WhatsappInput({
     );
   });
 
+  const effectivePlaceholder = placeholder || selectedCountry.placeholder;
+
   return (
     <View style={styles.container}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Text style={[styles.label, isDark && styles.labelDark]}>{label}</Text>}
       
-      <View style={[styles.inputContainer, error && styles.inputContainerError]}>
+      <View style={[
+        styles.inputContainer,
+        error && styles.inputContainerError,
+        isDark && styles.inputContainerDark
+      ]}>
         {/* Seletor de país */}
         <TouchableOpacity
           style={styles.countrySelector}
@@ -140,22 +150,22 @@ export function WhatsappInput({
           disabled={readonly}
         >
           <Text style={styles.flag}>{selectedCountry.flag}</Text>
-          <Text style={styles.dialCode}>{selectedCountry.dialCode}</Text>
+          <Text style={[styles.dialCode, isDark && styles.dialCodeDark]}>{selectedCountry.dialCode}</Text>
           {!readonly && (
-            <HugeiconsIcon icon={ArrowDown01Icon} size={16} color="#6B7280" />
+            <HugeiconsIcon icon={ArrowDown01Icon} size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
           )}
         </TouchableOpacity>
 
         {/* Separador */}
-        <View style={styles.separator} />
+        <View style={[styles.separator, isDark && styles.separatorDark]} />
 
         {/* Input do número */}
         <TextInput
-          style={styles.input}
+          style={[styles.input, isDark && styles.inputDark]}
           value={localValue}
           onChangeText={handleTextChange}
-          placeholder={selectedCountry.placeholder}
-          placeholderTextColor="#9CA3AF"
+          placeholder={effectivePlaceholder}
+          placeholderTextColor={isDark ? '#666' : '#9CA3AF'}
           keyboardType="phone-pad"
           editable={!readonly}
         />
@@ -183,17 +193,17 @@ export function WhatsappInput({
         >
           <TouchableOpacity 
             activeOpacity={1} 
-            style={styles.modalContent}
+            style={[styles.modalContent, isDark && styles.modalContentDark]}
             onPress={(e) => e.stopPropagation()}
           >
-            <Text style={styles.modalTitle}>Selecione o país</Text>
+            <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>Selecione o país</Text>
             
             <TextInput
-              style={styles.filterInput}
+              style={[styles.filterInput, isDark && styles.filterInputDark]}
               value={countryFilter}
               onChangeText={setCountryFilter}
               placeholder="Buscar país..."
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={isDark ? '#666' : '#9CA3AF'}
               autoCapitalize="none"
               autoCorrect={false}
             />
@@ -206,15 +216,15 @@ export function WhatsappInput({
                     <TouchableOpacity
                       style={[
                         styles.countryOption,
-                        selectedCountry.code === country.code && styles.countryOptionSelected,
+                        selectedCountry.code === country.code && (isDark ? styles.countryOptionSelectedDark : styles.countryOptionSelected),
                       ]}
                       onPress={() => handleCountrySelect(country)}
                     >
                       <Text style={styles.countryFlag}>{country.flag}</Text>
-                      <Text style={styles.countryName}>{country.name}</Text>
-                      <Text style={styles.countryDialCode}>{country.dialCode}</Text>
+                      <Text style={[styles.countryName, isDark && styles.countryNameDark]}>{country.name}</Text>
+                      <Text style={[styles.countryDialCode, isDark && styles.countryDialCodeDark]}>{country.dialCode}</Text>
                     </TouchableOpacity>
-                    {originalIndex === 1 && !countryFilter && <View style={styles.countrySeparator} />}
+                    {originalIndex === 1 && !countryFilter && <View style={[styles.countrySeparator, isDark && styles.countrySeparatorDark]} />}
                   </React.Fragment>
                 );
               })}
@@ -236,6 +246,9 @@ const styles = StyleSheet.create({
     color: '#374151',
     marginBottom: 8,
   },
+  labelDark: {
+    color: '#D1D5DB',
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -245,6 +258,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     height: 56,
     paddingHorizontal: 12,
+  },
+  inputContainerDark: {
+    backgroundColor: '#1a1a1a',
+    borderColor: '#333',
   },
   inputContainerError: {
     borderColor: '#EF4444',
@@ -263,17 +280,26 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#374151',
   },
+  dialCodeDark: {
+    color: '#D1D5DB',
+  },
   separator: {
     width: 1,
     height: 24,
     backgroundColor: '#E5E7EB',
     marginHorizontal: 8,
   },
+  separatorDark: {
+    backgroundColor: '#333',
+  },
   input: {
     flex: 1,
     fontSize: 16,
     color: '#1F2937',
     paddingVertical: 0,
+  },
+  inputDark: {
+    color: '#F9FAFB',
   },
   errorText: {
     fontSize: 12,
@@ -295,12 +321,18 @@ const styles = StyleSheet.create({
     maxWidth: 320,
     maxHeight: '80%',
   },
+  modalContentDark: {
+    backgroundColor: '#1f1f1f',
+  },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#1F2937',
     marginBottom: 12,
     textAlign: 'center',
+  },
+  modalTitleDark: {
+    color: '#F9FAFB',
   },
   filterInput: {
     backgroundColor: '#F9FAFB',
@@ -312,6 +344,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#1F2937',
     marginBottom: 12,
+  },
+  filterInputDark: {
+    backgroundColor: '#2a2a2a',
+    borderColor: '#444',
+    color: '#F9FAFB',
   },
   countriesList: {
     maxHeight: 400,
@@ -326,6 +363,9 @@ const styles = StyleSheet.create({
   countryOptionSelected: {
     backgroundColor: '#EBF5FF',
   },
+  countryOptionSelectedDark: {
+    backgroundColor: '#2a3a4a',
+  },
   countryFlag: {
     fontSize: 24,
     marginRight: 12,
@@ -335,13 +375,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
   },
+  countryNameDark: {
+    color: '#F9FAFB',
+  },
   countryDialCode: {
     fontSize: 14,
     color: '#6B7280',
+  },
+  countryDialCodeDark: {
+    color: '#9CA3AF',
   },
   countrySeparator: {
     height: 1,
     backgroundColor: '#E5E7EB',
     marginVertical: 8,
+  },
+  countrySeparatorDark: {
+    backgroundColor: '#333',
   },
 });

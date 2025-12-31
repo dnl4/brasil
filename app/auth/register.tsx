@@ -16,6 +16,7 @@ import { CustomDialog } from '../../components/ui/custom-dialog';
 import { InputField } from '../../components/ui/input-field';
 import { PrimaryButton } from '../../components/ui/primary-button';
 import { useSnackbar } from '../../components/ui/snackbar';
+import { WhatsappInput } from '../../components/ui/whatsapp-input';
 import { auth } from '../../firebaseConfig';
 import { isDisplayNameAvailable, updateUserProfile, validateDisplayNameFormat } from '../../services/user-service';
 
@@ -202,14 +203,13 @@ export default function RegisterScreen() {
               onFocusWithPosition={handleInputFocus}
             />
 
-            {/* Phone Field */}
-            <InputField
-              label="Telefone"
+            {/* WhatsApp Field */}
+            <WhatsappInput
+              label="WhatsApp"
               value={phone}
-              onChangeText={setPhone}
-              placeholder="+55 11 99999-9999"
-              keyboardType="phone-pad"
-              onFocusWithPosition={handleInputFocus}
+              onChangeValue={setPhone}
+              placeholder="Digite seu WhatsApp"
+              isDark={false}
             />
 
             {/* Password Field */}
