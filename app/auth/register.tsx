@@ -54,6 +54,21 @@ export default function RegisterScreen() {
     scrollViewY.current = event.nativeEvent.contentOffset.y;
   };
 
+  const fillRandomData = () => {
+    const randomId = Math.random().toString(36).substring(2, 10);
+    const firstNames = ['joao', 'maria', 'carlos', 'ana', 'pedro', 'julia', 'lucas', 'fernanda'];
+    const lastNames = ['silva', 'santos', 'oliveira', 'souza', 'lima', 'costa', 'ferreira'];
+    const randomFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const randomLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    
+    setDisplayName(`${randomFirstName}${randomId.slice(0, 4)}`);
+    setFullName(`${randomFirstName.charAt(0).toUpperCase() + randomFirstName.slice(1)} ${randomLastName.charAt(0).toUpperCase() + randomLastName.slice(1)}`);
+    setEmail(`danilofsouza+${Date.now()}@gmail.com`);
+    setPhone(`5511${Math.floor(Math.random() * 900000000 + 100000000)}`);
+    setPassword('123456');
+    setConfirmPassword('123456');
+  };
+
   const handleRegister = async () => {
     // Validações
     const displayNameValidation = validateDisplayNameFormat(displayName);
@@ -171,7 +186,9 @@ export default function RegisterScreen() {
               <Ionicons name="chevron-back" size={28} color="#000" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Criar conta</Text>
-            <View style={styles.headerSpacer} />
+            <TouchableOpacity onPress={fillRandomData}>
+              <Ionicons name="dice" size={24} color="#000" />
+            </TouchableOpacity>
           </View>
 
           {/* Form */}

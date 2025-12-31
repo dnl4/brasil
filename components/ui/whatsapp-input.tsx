@@ -54,8 +54,10 @@ export function WhatsappInput({
       } else {
         setLocalValue(digits);
       }
+    } else {
+      setLocalValue('');
     }
-  }, []);
+  }, [value]);
 
   const formatPhoneNumber = (digits: string, country: Country): string => {
     if (!digits) return '';
