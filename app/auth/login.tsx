@@ -68,15 +68,7 @@ export default function LoginScreen() {
     setHoldRedirect(true);
     
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
-      
-      if (!userCredential.user.emailVerified) {
-        await auth.signOut();
-        setHoldRedirect(false);
-        show('Por favor, verifique seu email antes de fazer login.', { backgroundColor: '#ba1a1a' });
-        return;
-      }
-      
+      await signInWithEmailAndPassword(auth, email.trim(), password);
       setShowSuccessDialog(true);
     } catch (error: any) {
       // Libera o redirect em caso de erro
