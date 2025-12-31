@@ -59,6 +59,7 @@ export default function ContactSettingsScreen() {
       if (profile) {
         setDisplayName(profile.displayName || '');
         setFullName(profile.fullName || '');
+        setPhone(profile.phoneNumber || '');
       }
     } catch (error) {
       console.error('Erro ao carregar perfil:', error);
