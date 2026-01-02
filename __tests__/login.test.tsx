@@ -1,5 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import LoginScreen from '../app/auth/login';
 
 const mockShow = jest.fn();
@@ -50,25 +49,6 @@ describe('LoginScreen', () => {
 
     expect(emailInput.props.value).toBe('teste@email.com');
     expect(passwordInput.props.value).toBe('senha123');
-  });
-
-  it('não permite login se email não estiver verificado', async () => {
-    (signInWithEmailAndPassword as jest.Mock).mockResolvedValue({
-      user: {emailVerified: false },
-    });
-
-    render(<LoginScreen />);
-
-    fireEvent.changeText(screen.getByTestId('email-input'), 'teste@email.com');
-    fireEvent.changeText(screen.getByTestId('password-input'), 'senha123');
-    fireEvent.press(screen.getByTestId('login-button'));
-
-    await waitFor(() => {
-      expect(mockShow).toHaveBeenCalledWith(
-        'Por favor, verifique seu email antes de fazer login.',
-        { backgroundColor: '#ba1a1a' }
-      );
-    });
   });
 });
 

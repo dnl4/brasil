@@ -6,6 +6,7 @@ import React from 'react';
 import { HapticTab } from '@/components/haptic-tab';
 import { useAuth } from '@/contexts/auth-context';
 import EmailNotVerifiedScreen from './email-not-verified';
+import WhatsappNotVerifiedScreen from './whatsapp-not-verified';
 
 export default function TabLayout() {
   const activeColor = '#0066FF';
@@ -17,6 +18,9 @@ export default function TabLayout() {
 
   if (!user?.emailVerified) {
     return <EmailNotVerifiedScreen />;
+  }
+  if (!user?.phoneNumberVerified) {
+    return <WhatsappNotVerifiedScreen />;
   }
   return (
     <Tabs
@@ -67,6 +71,12 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="email-not-verified"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="whatsapp-not-verified"
         options={{
           href: null,
         }}

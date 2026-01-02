@@ -11,8 +11,8 @@ jest.mock('expo-router', () => ({
 }));
 
 jest.mock('firebase/auth', () => ({
-  createUserWithEmailAndPassword: jest.fn(),
-  updateProfile: jest.fn(),
+  createUserWithEmailAndPassword: jest.fn().mockName('createUserWithEmailAndPassword'),
+  updateProfile: jest.fn().mockName('updateProfile'),
 }));
 
 jest.mock('../firebaseConfig', () => ({
@@ -204,6 +204,7 @@ describe('RegisterScreen', () => {
         'Este WhatsApp já está em uso',
         { backgroundColor: '#ba1a1a' }
       );
+      expect(createUserWithEmailAndPassword).not.toHaveBeenCalled();
     });
   });
 });

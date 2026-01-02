@@ -113,7 +113,7 @@ export default function RegisterScreen() {
         if (!isPhoneAvailable) {
           show('Este WhatsApp já está em uso', { backgroundColor: '#ba1a1a' });
           setLoading(false);
-          // return;
+          return;
         }
       }
 
