@@ -3,11 +3,12 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import RegisterScreen from '../app/auth/register';
 import { isDisplayNameAvailable, isPhoneNumberAvailable } from '../services/user-service';
 
-const mockShow = jest.fn();
-const mockValidateDisplayNameFormat = jest.fn();
+// const mockShow = jest.fn((...args) => console.log('snackbar.show:', ...args)).mockName('snackbar.show');
+const mockShow = jest.fn().mockName('snackbar.show');
+const mockValidateDisplayNameFormat = jest.fn().mockName('mockValidateDisplayNameFormat');
 
 jest.mock('expo-router', () => ({
-  router: { back: jest.fn(), replace: jest.fn() },
+  router: { back: jest.fn().mockName('router.back'), replace: jest.fn().mockName('router.replace') },
 }));
 
 jest.mock('firebase/auth', () => ({
@@ -24,9 +25,9 @@ jest.mock('../components/ui/snackbar', () => ({
 }));
 
 jest.mock('../services/user-service', () => ({
-  isDisplayNameAvailable: jest.fn().mockResolvedValue(true),
-  isPhoneNumberAvailable: jest.fn().mockResolvedValue(true),
-  updateUserProfile: jest.fn().mockResolvedValue(undefined),
+  isDisplayNameAvailable: jest.fn().mockName('isDisplayNameAvailable').mockResolvedValue(true),
+  isPhoneNumberAvailable: jest.fn().mockName('isPhoneNumberAvailable').mockResolvedValue(true),
+  updateUserProfile: jest.fn().mockName('updateUserProfile').mockResolvedValue(undefined),
   validateDisplayNameFormat: (...args: any[]) => mockValidateDisplayNameFormat(...args),
 }));
 
@@ -50,6 +51,9 @@ jest.mock('@hugeicons/core-free-icons', () => ({
 describe('RegisterScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (createUserWithEmailAndPassword as jest.Mock).mockResolvedValue({
+      user: { uid: 'test-uid' },
+    });
     mockValidateDisplayNameFormat.mockImplementation((displayName: string) => {
       const trimmed = displayName?.trim() || '';
       if (!trimmed) {
@@ -69,6 +73,141 @@ describe('RegisterScreen', () => {
     expect(screen.getByTestId('fullname-input')).toBeTruthy();
     expect(screen.getByTestId('email-input')).toBeTruthy();
     expect(screen.getByTestId('register-button')).toBeTruthy();
+  });
+
+  describe('validação de campos obrigatórios', () => {
+    it('mostra erro se displayName está vazio', async () => {
+      render(<RegisterScreen />);
+
+      await act(async () => {
+        fireEvent.changeText(screen.getByTestId('fullname-input'), 'Nome Teste');
+        fireEvent.changeText(screen.getByTestId('email-input'), 'teste@email.com');
+        fireEvent.changeText(screen.getByTestId('password-input'), 'senha123');
+        fireEvent.changeText(screen.getByTestId('confirm-password-input'), 'senha123');
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByTestId('register-button'));
+      });
+
+      await waitFor(() => {
+        expect(mockShow).toHaveBeenCalledWith(
+          'Nome de exibição é obrigatório',
+          { backgroundColor: '#ba1a1a' }
+        );
+        expect(createUserWithEmailAndPassword).not.toHaveBeenCalled();
+      });
+    });
+
+    it('mostra erro se fullName está vazio', async () => {
+      render(<RegisterScreen />);
+
+      await act(async () => {
+        fireEvent.changeText(screen.getByTestId('displayname-input'), 'usuario1');
+        fireEvent.changeText(screen.getByTestId('email-input'), 'teste@email.com');
+        fireEvent.changeText(screen.getByTestId('password-input'), 'senha123');
+        fireEvent.changeText(screen.getByTestId('confirm-password-input'), 'senha123');
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByTestId('register-button'));
+      });
+
+      await waitFor(() => {
+        expect(mockShow).toHaveBeenCalledWith(
+          'Por favor, insira seu nome completo.',
+          { backgroundColor: '#ba1a1a' }
+        );
+        expect(createUserWithEmailAndPassword).not.toHaveBeenCalled();
+      });
+    });
+
+    it('mostra erro se email está vazio', async () => {
+      render(<RegisterScreen />);
+
+      await act(async () => {
+        fireEvent.changeText(screen.getByTestId('displayname-input'), 'usuario1');
+        fireEvent.changeText(screen.getByTestId('fullname-input'), 'Nome Teste');
+        fireEvent.changeText(screen.getByTestId('password-input'), 'senha123');
+        fireEvent.changeText(screen.getByTestId('confirm-password-input'), 'senha123');
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByTestId('register-button'));
+      });
+
+      await waitFor(() => {
+        expect(mockShow).toHaveBeenCalledWith(
+          'Por favor, insira seu email.',
+          { backgroundColor: '#ba1a1a' }
+        );
+        expect(createUserWithEmailAndPassword).not.toHaveBeenCalled();
+      });
+    });
+
+    it('mostra erro se senha está vazia', async () => {
+      render(<RegisterScreen />);
+
+      await act(async () => {
+        fireEvent.changeText(screen.getByTestId('displayname-input'), 'usuario1');
+        fireEvent.changeText(screen.getByTestId('fullname-input'), 'Nome Teste');
+        fireEvent.changeText(screen.getByTestId('email-input'), 'teste@email.com');
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByTestId('register-button'));
+      });
+
+      await waitFor(() => {
+        expect(mockShow).toHaveBeenCalledWith(
+          'Por favor, insira uma senha.',
+          { backgroundColor: '#ba1a1a' }
+        );
+        expect(createUserWithEmailAndPassword).not.toHaveBeenCalled();
+      });
+    });
+
+    it('mostra erro se senha tem menos de 6 caracteres', async () => {
+      render(<RegisterScreen />);
+
+      await act(async () => {
+        fireEvent.changeText(screen.getByTestId('displayname-input'), 'usuario1');
+        fireEvent.changeText(screen.getByTestId('fullname-input'), 'Nome Teste');
+        fireEvent.changeText(screen.getByTestId('email-input'), 'teste@email.com');
+        fireEvent.changeText(screen.getByTestId('password-input'), '12345');
+        fireEvent.changeText(screen.getByTestId('confirm-password-input'), '12345');
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByTestId('register-button'));
+      });
+
+      await waitFor(() => {
+        expect(mockShow).toHaveBeenCalledWith(
+          'A senha deve ter pelo menos 6 caracteres.',
+          { backgroundColor: '#ba1a1a' }
+        );
+        expect(createUserWithEmailAndPassword).not.toHaveBeenCalled();
+      });
+    });
+
+    it('mostra erro se WhatsApp está vazio', async () => {
+      render(<RegisterScreen />);
+
+      await act(async () => {
+        fireEvent.changeText(screen.getByTestId('displayname-input'), 'usuario1');
+        fireEvent.changeText(screen.getByTestId('fullname-input'), 'Nome Teste');
+        fireEvent.changeText(screen.getByTestId('email-input'), 'teste@email.com');
+        fireEvent.changeText(screen.getByTestId('password-input'), 'senha123');
+        fireEvent.changeText(screen.getByTestId('confirm-password-input'), 'senha123');
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByTestId('register-button'));
+      });
+
+      await waitFor(() => {
+        expect(mockShow).toHaveBeenCalledWith(
+          'Por favor, insira seu WhatsApp.',
+          { backgroundColor: '#ba1a1a' }
+        );
+        expect(createUserWithEmailAndPassword).not.toHaveBeenCalled();
+      });
+    });
   });
 
   it('mostra erro se senhas não coincidem', async () => {
@@ -101,25 +240,17 @@ describe('RegisterScreen', () => {
   });
 
   it('cria conta com sucesso', async () => {
-    (createUserWithEmailAndPassword as jest.Mock).mockResolvedValue({
-      user: { uid: '123' },
-    });
     (updateProfile as jest.Mock).mockResolvedValue(undefined);
 
     render(<RegisterScreen />);
 
-    const displayNameInput = screen.getByTestId('displayname-input');
-    const fullNameInput = screen.getByTestId('fullname-input');
-    const emailInput = screen.getByTestId('email-input');
-    const passwordInput = screen.getByTestId('password-input');
-    const confirmPasswordInput = screen.getByTestId('confirm-password-input');
-
     await act(async () => {
-      fireEvent.changeText(displayNameInput, 'usuario1');
-      fireEvent.changeText(fullNameInput, 'Nome Teste');
-      fireEvent.changeText(emailInput, 'teste@email.com');
-      fireEvent.changeText(passwordInput, 'senha123');
-      fireEvent.changeText(confirmPasswordInput, 'senha123');
+      fireEvent.changeText(screen.getByTestId('displayname-input'), 'usuario1');
+      fireEvent.changeText(screen.getByTestId('fullname-input'), 'Nome Teste');
+      fireEvent.changeText(screen.getByTestId('email-input'), 'teste@email.com');
+      fireEvent.changeText(screen.getByTestId('whatsapp-input'), '5511999999999');
+      fireEvent.changeText(screen.getByTestId('password-input'), 'senha123');
+      fireEvent.changeText(screen.getByTestId('confirm-password-input'), 'senha123');
     });
     await act(async () => {
       fireEvent.press(screen.getByTestId('register-button'));
@@ -139,6 +270,7 @@ describe('RegisterScreen', () => {
       fireEvent.changeText(screen.getByTestId('displayname-input'), 'usuario1');
       fireEvent.changeText(screen.getByTestId('fullname-input'), 'Nome Teste');
       fireEvent.changeText(screen.getByTestId('email-input'), 'teste@email.com');
+      fireEvent.changeText(screen.getByTestId('whatsapp-input'), '5511999999999');
       fireEvent.changeText(screen.getByTestId('password-input'), 'senha123');
       fireEvent.changeText(screen.getByTestId('confirm-password-input'), 'senha123');
     });
@@ -166,6 +298,7 @@ describe('RegisterScreen', () => {
       fireEvent.changeText(screen.getByTestId('displayname-input'), 'usuario1');
       fireEvent.changeText(screen.getByTestId('fullname-input'), 'Nome Teste');
       fireEvent.changeText(screen.getByTestId('email-input'), 'teste@email.com');
+      fireEvent.changeText(screen.getByTestId('whatsapp-input'), '5511999999999');
       fireEvent.changeText(screen.getByTestId('password-input'), 'senha123');
       fireEvent.changeText(screen.getByTestId('confirm-password-input'), 'senha123');
     });
@@ -207,5 +340,6 @@ describe('RegisterScreen', () => {
       expect(createUserWithEmailAndPassword).not.toHaveBeenCalled();
     });
   });
+
 });
 

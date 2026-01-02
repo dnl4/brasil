@@ -96,6 +96,10 @@ export default function RegisterScreen() {
       show('As senhas não coincidem.', { backgroundColor: '#ba1a1a' });
       return;
     }
+    if (!phone.trim()) {
+      show('Por favor, insira seu WhatsApp.', { backgroundColor: '#ba1a1a' });
+      return;
+    }
 
     setLoading(true);
     try {
@@ -138,7 +142,7 @@ export default function RegisterScreen() {
       // Registro bem-sucedido, mostrar dialog de sucesso
       setShowSuccessDialog(true);
     } catch (error: any) {
-      let errorMessage = 'Ocorreu um erro ao criar sua conta.';
+      let errorMessage = 'Ocorreu um erro ao criar sua conta: ' + error.message;
       
       switch (error.code) {
         case 'auth/email-already-in-use':
