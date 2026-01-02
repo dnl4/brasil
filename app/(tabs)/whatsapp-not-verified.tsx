@@ -1,3 +1,4 @@
+import { CustomDialog } from '@/components/ui/custom-dialog';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { useSnackbar } from '@/components/ui/snackbar';
 import { auth } from '@/firebaseConfig';
@@ -8,7 +9,6 @@ import {
   storeVerificationCode,
   verifyCode,
 } from '@/services/whatsapp-service';
-import { useAuth } from '@/contexts/auth-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { signOut } from 'firebase/auth';
@@ -25,14 +25,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function WhatsAppNotVerifiedScreen() {
-  const { user } = useAuth();
-
-  useEffect(() => {
-    if (user?.phoneNumberVerified) {
-      router.replace('/(tabs)');
-    }
-  }, [user?.phoneNumberVerified]);
-
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [sending, setSending] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -121,8 +114,7 @@ export default function WhatsAppNotVerifiedScreen() {
         return;
       }
 
-      await updateUserProfile(userId, { phoneNumberVerified: true });
-      router.replace('/(tabs)');
+      setShowSuccessDialog(true);
     } catch {
       show('Erro ao verificar código.', { backgroundColor: '#ba1a1a' });
     } finally {
@@ -211,6 +203,20 @@ export default function WhatsAppNotVerifiedScreen() {
           <Text style={styles.linkText}>Sair da conta</Text>
         </TouchableOpacity>
       </View>
+
+      <CustomDialog
+        visible={showSuccessDialog}
+        title="Verificação concluída!"
+        message="Obrigado por concluir a verificação."
+        buttons={[{ text: 'OK' }]}
+        onClose={async () => {
+          const userId = auth.currentUser?.uid;
+          if (userId) {
+            await updateUserProfile(userId, { phoneNumberVerified: true });
+          }
+          setShowSuccessDialog(false);
+        }}
+      />
     </SafeAreaView>
   );
 }
