@@ -1,3 +1,4 @@
+import { CustomDialog } from '@/components/ui/custom-dialog';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { useSnackbar } from '@/components/ui/snackbar';
 import { useAuth } from '@/contexts/auth-context';
@@ -16,14 +17,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EmailNotVerifiedScreen() {
-  const { user, refreshUser } = useAuth();
+  const { refreshUser } = useAuth();
   
-  useEffect(() => {
-    if (user?.emailVerified) {
-      router.replace('/(tabs)');
-    }
-  }, [user?.emailVerified]);
-
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [sending, setSending] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -85,7 +81,7 @@ export default function EmailNotVerifiedScreen() {
       await refreshUser();
       
       if (auth.currentUser.emailVerified) {
-        // O layout vai redirecionar automaticamente
+        setShowSuccessDialog(true);
       } else {
         show('Email ainda não verificado.', { backgroundColor: '#f59e0b' });
       }
@@ -157,6 +153,17 @@ export default function EmailNotVerifiedScreen() {
           <Text style={styles.linkText}>Sair da conta</Text>
         </TouchableOpacity>
       </View>
+
+      <CustomDialog
+        visible={showSuccessDialog}
+        title="E-mail verificado!"
+        message="Seu e-mail foi verificado com sucesso. Agora vamos verificar seu WhatsApp."
+        buttons={[{ text: 'Continuar' }]}
+        onClose={() => {
+          setShowSuccessDialog(false);
+          router.push('/(tabs)/whatsapp-not-verified');
+        }}
+      />
     </SafeAreaView>
   );
 }
