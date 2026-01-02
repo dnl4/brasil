@@ -8,6 +8,7 @@ import {
   storeVerificationCode,
   verifyCode,
 } from '@/services/whatsapp-service';
+import { useAuth } from '@/contexts/auth-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { signOut } from 'firebase/auth';
@@ -24,6 +25,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function WhatsAppNotVerifiedScreen() {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user?.phoneNumberVerified) {
+      router.replace('/(tabs)');
+    }
+  }, [user?.phoneNumberVerified]);
+
   const [verifying, setVerifying] = useState(false);
   const [sending, setSending] = useState(false);
   const [countdown, setCountdown] = useState(0);

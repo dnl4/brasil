@@ -16,11 +16,18 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EmailNotVerifiedScreen() {
+  const { user, refreshUser } = useAuth();
+  
+  useEffect(() => {
+    if (user?.emailVerified) {
+      router.replace('/(tabs)');
+    }
+  }, [user?.emailVerified]);
+
   const [verifying, setVerifying] = useState(false);
   const [sending, setSending] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const { show } = useSnackbar();
-  const { refreshUser } = useAuth();
 
   const loadCountdown = useCallback(async () => {
     const sentAt = await AsyncStorage.getItem('emailVerificationSentAt');
