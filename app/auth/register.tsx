@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from 'firebase/auth';
 import { useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -123,6 +124,12 @@ export default function RegisterScreen() {
 
       // Criar usuário no Firebase
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      
+      // Salvar timestamp ANTES de enviar o email (pois o auth state change já aconteceu)
+      await AsyncStorage.setItem('emailVerificationSentAt', Date.now().toString());
+      
+      // Enviar email de verificação
+      await sendEmailVerification(userCredential.user);
       
       const normalizedDisplayName = displayName.trim().toLowerCase();
       

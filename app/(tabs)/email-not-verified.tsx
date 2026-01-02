@@ -3,9 +3,10 @@ import { useSnackbar } from '@/components/ui/snackbar';
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/firebaseConfig';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router, useFocusEffect } from 'expo-router';
 import { sendEmailVerification, signOut } from 'firebase/auth';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -21,6 +22,25 @@ export default function EmailNotVerifiedScreen() {
   const { show } = useSnackbar();
   const { refreshUser } = useAuth();
 
+  const loadCountdown = useCallback(async () => {
+    const sentAt = await AsyncStorage.getItem('emailVerificationSentAt');
+    if (sentAt) {
+      const elapsed = Math.floor((Date.now() - parseInt(sentAt)) / 1000);
+      const remaining = Math.max(0, 60 - elapsed);
+      setCountdown(remaining);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCountdown();
+  }, [loadCountdown]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadCountdown();
+    }, [loadCountdown])
+  );
+
   useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -34,6 +54,7 @@ export default function EmailNotVerifiedScreen() {
     setSending(true);
     try {
       await sendEmailVerification(auth.currentUser);
+      await AsyncStorage.setItem('emailVerificationSentAt', Date.now().toString());
       show('Email de verificação enviado!', { backgroundColor: '#22c55e' });
       setCountdown(60);
     } catch (error: any) {
