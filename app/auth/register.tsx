@@ -125,11 +125,12 @@ export default function RegisterScreen() {
       // Criar usuário no Firebase
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       
-      // Salvar timestamp ANTES de enviar o email (pois o auth state change já aconteceu)
-      await AsyncStorage.setItem('emailVerificationSentAt', Date.now().toString());
-      
-      // Enviar email de verificação
-      await sendEmailVerification(userCredential.user);
+      // Enviar email de verificação (a menos que EXPO_PUBLIC_SKIP_EMAIL_VERIFICATION esteja ativo)
+      if (process.env.EXPO_PUBLIC_SKIP_EMAIL_VERIFICATION !== 'true') {
+        // Salvar timestamp ANTES de enviar o email (pois o auth state change já aconteceu)
+        await AsyncStorage.setItem('emailVerificationSentAt', Date.now().toString());
+        await sendEmailVerification(userCredential.user);
+      }
       
       const normalizedDisplayName = displayName.trim().toLowerCase();
       
@@ -142,8 +143,8 @@ export default function RegisterScreen() {
       await updateUserProfile(userCredential.user.uid, {
         displayName: normalizedDisplayName,
         fullName: fullName.trim(),
-        email: email.trim(),
         phoneNumber: phone.trim(),
+        ...(process.env.EXPO_PUBLIC_SKIP_WHATSAPP_VERIFICATION === 'true' && { phoneNumberVerified: true }),
       });
 
       // Registro bem-sucedido, mostrar dialog de sucesso

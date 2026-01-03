@@ -16,10 +16,10 @@ export default function TabLayout() {
     return <Redirect href="/auth/login" />;
   }
 
-  if (!user?.emailVerified) {
+  if (!user?.emailVerified && process.env.EXPO_PUBLIC_SKIP_EMAIL_VERIFICATION !== 'true') {
     return <EmailNotVerifiedScreen />;
   }
-  if (!user?.phoneNumberVerified) {
+  if (!user?.phoneNumberVerified && process.env.EXPO_PUBLIC_SKIP_WHATSAPP_VERIFICATION !== 'true') {
     return <WhatsappNotVerifiedScreen />;
   }
   return (

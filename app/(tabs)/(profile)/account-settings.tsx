@@ -1,7 +1,6 @@
 import {
-  Call02Icon,
   Mail01Icon,
-  UserIcon,
+  UserIcon
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { useRouter } from 'expo-router';
@@ -183,7 +182,6 @@ export default function ContactSettingsScreen() {
     await updateUserProfile(user.uid, {
       displayName: displayName.trim().toLowerCase(),
       fullName: fullName.trim(),
-      email: email.trim(),
       phoneNumber: phone.trim(),
     });
 

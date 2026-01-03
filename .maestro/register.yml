@@ -1,0 +1,9 @@
+appId: com.anonymous.brasiguaios
+---
+- assertVisible: 'Criar conta'
+- tapOn: 'Criar conta'
+- assertVisible: 'Nome de exibição'
+- tapOn:
+    id: "random-data-button"
+- tapOn:
+    id: "register-button"
