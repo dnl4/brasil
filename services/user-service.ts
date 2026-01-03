@@ -123,6 +123,7 @@ export async function updateUserProfile(
       displayName: data.displayName,
       fullName: data.fullName,
       phoneNumber: data.phoneNumber || '',
+      phoneNumberVerified: data.phoneNumberVerified || false,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
