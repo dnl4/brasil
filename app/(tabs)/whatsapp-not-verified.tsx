@@ -191,13 +191,6 @@ export default function WhatsAppNotVerifiedScreen() {
 
         <TouchableOpacity
           style={styles.linkContainer}
-          onPress={() => router.push('/(tabs)/email-not-verified')}
-        >
-          <Text style={styles.backText}>Voltar para o passo 1</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.linkContainer}
           onPress={handleLogout}
         >
           <Text style={styles.linkText}>Sair da conta</Text>

@@ -141,13 +141,6 @@ export default function EmailNotVerifiedScreen() {
 
         <TouchableOpacity
           style={styles.linkContainer}
-          onPress={() => router.push('/(tabs)/whatsapp-not-verified')}
-        >
-          <Text style={styles.skipText}>Ir para o passo 2</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.linkContainer}
           onPress={handleLogout}
         >
           <Text style={styles.linkText}>Sair da conta</Text>
