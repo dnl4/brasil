@@ -78,6 +78,40 @@ service cloud.firestore {
     }
     
     // ============================================
+    // COLEÇÃO: suggestions
+    // Sugestões de funcionalidades
+    // ============================================
+    match /suggestions/{suggestionId} {
+      // Permitir leitura se estiver autenticado
+      allow read: if isAuthenticated();
+      
+      // Permitir criação se estiver autenticado e for o próprio usuário
+      allow create: if isAuthenticated()
+                    && hasRequiredFields(['title', 'description', 'authorId', 'authorName', 'votes', 'voters', 'status'])
+                    && isOwner(request.resource.data.authorId)
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() >= 5
+                    && request.resource.data.description is string
+                    && request.resource.data.description.size() >= 10
+                    && request.resource.data.votes == 1
+                    && request.resource.data.voters.size() == 1
+                    && request.resource.data.status == 'pending';
+      
+      // Permitir atualização apenas para votos (qualquer usuário autenticado pode votar)
+      allow update: if isAuthenticated()
+                    && request.resource.data.title == resource.data.title
+                    && request.resource.data.description == resource.data.description
+                    && request.resource.data.authorId == resource.data.authorId
+                    && request.resource.data.authorName == resource.data.authorName
+                    && request.resource.data.status == resource.data.status
+                    && request.resource.data.votes is number
+                    && request.resource.data.voters is list;
+      
+      // Não permitir exclusão (apenas admin via console)
+      allow delete: if false;
+    }
+    
+    // ============================================
     // COLEÇÃO: reports
     // Denúncias de avaliações
     // ============================================

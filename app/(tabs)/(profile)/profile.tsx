@@ -2,6 +2,7 @@
 import {
   ArrowRight01Icon,
   Bug02Icon,
+  Idea01Icon,
   LockPasswordIcon,
   Logout01Icon,
   Settings01FreeIcons,
@@ -321,6 +322,7 @@ export default function ProfileScreen() {
           ]}
         >
           <MenuItem icon={Settings01FreeIcons} label="Configurações de conta" onPress={() => router.push('/(tabs)/(profile)/account-settings')} showDivider fullWidthDivider />
+          <MenuItem icon={Idea01Icon} label="Sugestões de melhorias" onPress={() => router.push('/(tabs)/(profile)/suggestions')} showDivider fullWidthDivider />
           <MenuItem icon={Bug02Icon} label="🐛 Debug User Info" onPress={handleDebugPress} showDivider fullWidthDivider />
           <MenuItem icon={LockPasswordIcon} label="Alterar senha" onPress={() => router.push('/(tabs)/(profile)/change-password')} showDivider fullWidthDivider />
           <MenuItem

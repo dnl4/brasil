@@ -39,6 +39,18 @@ export default function ProfileLayout() {
           headerShadowVisible: false,
         }}
       />
+      <Stack.Screen
+        name="suggestions"
+        options={{
+          headerShown: true,
+          title: 'Sugestões',
+          headerStyle: {
+            backgroundColor: colors.background,
+          },
+          headerTintColor: colors.text,
+          headerShadowVisible: false,
+        }}
+      />
     </Stack>
   );
 }
