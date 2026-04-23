@@ -94,7 +94,7 @@ export default function EmailNotVerifiedScreen() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    router.replace('/auth/login');
+    router.replace('/auth/welcome');
   };
 
   return (

@@ -124,7 +124,7 @@ export default function WhatsAppNotVerifiedScreen() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    router.replace('/auth/login');
+    router.replace('/auth/welcome');
   };
 
   return (
