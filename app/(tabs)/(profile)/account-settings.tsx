@@ -4,7 +4,7 @@ import {
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { useRouter } from 'expo-router';
-import { updateEmail, updateProfile } from 'firebase/auth';
+import { updateProfile, verifyBeforeUpdateEmail } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -190,9 +190,13 @@ export default function ContactSettingsScreen() {
       displayName: displayName.trim().toLowerCase(),
     });
 
-    // Atualizar e-mail se foi alterado
-    if (email !== user?.email && email.trim()) {
-      await updateEmail(auth.currentUser, email.trim());
+    // Solicitar verificacao do novo e-mail antes de aplicar a troca
+    if (email.trim() !== (user?.email ?? '').trim() && email.trim()) {
+      await verifyBeforeUpdateEmail(auth.currentUser, email.trim());
+      snackbar.show('Enviamos uma verificacao para o novo e-mail. A alteracao sera concluida apos a confirmacao.', { backgroundColor: '#4CAF50' });
+      setOriginalPhone(phone.trim());
+      setShowSuccessDialog(true);
+      return;
     }
 
     setOriginalPhone(phone.trim());
