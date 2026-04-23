@@ -22,8 +22,8 @@ import { useAuth } from '../../contexts/auth-context';
 import { auth } from '../../firebaseConfig';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('danilofsouza@gmail.com');
-  const [password, setPassword] = useState('lllqwe123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const { setHoldRedirect } = useAuth();
@@ -157,6 +157,9 @@ export default function LoginScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              autoComplete="off"
+              textContentType="none"
+              importantForAutofill="no"
               onFocusWithPosition={handleInputFocus}
             />
 
@@ -167,6 +170,9 @@ export default function LoginScreen() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              autoComplete="off"
+              textContentType="none"
+              importantForAutofill="no"
               onFocusWithPosition={handleInputFocus}
             />
 

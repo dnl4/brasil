@@ -30,7 +30,7 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 describe('LoginScreen', () => {
-  it('renderiza campos de email, senha e botão', () => {
+  it('renderiza campos de email, senha e botao', () => {
     render(<LoginScreen />);
 
     expect(screen.getByTestId('email-input')).toBeTruthy();
@@ -51,4 +51,3 @@ describe('LoginScreen', () => {
     expect(passwordInput.props.value).toBe('senha123');
   });
 });
-
