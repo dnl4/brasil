@@ -70,7 +70,7 @@ export default function WhatsAppNotVerifiedScreen() {
 
   const handleSendCode = async () => {
     if (countdown > 0) return;
-    
+
     const userId = auth.currentUser?.uid;
     if (!userId) return;
 
@@ -83,9 +83,10 @@ export default function WhatsAppNotVerifiedScreen() {
       }
 
       const code = generateVerificationCode();
+      console.log('Código gerado:', code);
       storeVerificationCode(userProfile.phoneNumber, code);
       await sendVerificationCode(userProfile.phoneNumber, code);
-      
+
       show('Código enviado para seu WhatsApp!', { backgroundColor: '#22c55e' });
       setCountdown(60);
     } catch {

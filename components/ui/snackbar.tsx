@@ -33,7 +33,7 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
   const [options, setOptions] = useState<ShowOptions>({});
   const translateY = useRef(new Animated.Value(-100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insets = useSafeAreaInsets();
 
   const hide = useCallback(() => {

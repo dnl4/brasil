@@ -91,7 +91,7 @@ export default function ContactSettingsScreen() {
     }, 180);
   }, [scrollFocusedFieldIntoView]);
 
-  const handleFieldFocus = useCallback((inputRef: React.RefObject<RNTextInput>) => {
+  const handleFieldFocus = useCallback((inputRef: React.RefObject<RNTextInput | null>) => {
     inputRef.current?.measureInWindow((...measure) => {
       const [, y, , height] = measure;
       const layout = { y, height };

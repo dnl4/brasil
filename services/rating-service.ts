@@ -46,6 +46,23 @@ export interface UpdateRatingData {
 
 const RATINGS_COLLECTION = 'ratings';
 
+function normalizeTimestamp(value: unknown): Date | undefined {
+  if (!value) return undefined;
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (typeof value === 'object' && value !== null && 'toDate' in value) {
+    const timestamp = value as { toDate?: () => Date };
+    if (typeof timestamp.toDate === 'function') {
+      return timestamp.toDate();
+    }
+  }
+
+  return undefined;
+}
+
 /**
  * Formata o nome do usuário para exibição parcial (ex: "João Silva" -> "João S.")
  */
@@ -200,15 +217,22 @@ export async function getRatingsByService(service: string): Promise<Rating[]> {
   
   // Filtra no cliente (case-insensitive)
   const searchTerm = service.toLowerCase().trim();
-  
+
   return snapshot.docs
-    .map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate() || new Date(),
-      updatedAt: doc.data().updatedAt?.toDate(),
-    }))
-    .filter((rating) => 
+    .map((doc) => {
+      const data = doc.data() as Partial<Rating> & {
+        createdAt?: unknown;
+        updatedAt?: unknown;
+      };
+
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: normalizeTimestamp(data.createdAt) ?? new Date(),
+        updatedAt: normalizeTimestamp(data.updatedAt),
+      };
+    })
+    .filter((rating) =>
       rating.servico?.toLowerCase().includes(searchTerm)
     ) as Rating[];
 }

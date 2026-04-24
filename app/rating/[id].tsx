@@ -73,6 +73,42 @@ export default function RatingFormScreen() {
   const keyboardScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingFocusRef = useRef<{ y: number; height: number } | null>(null);
 
+  const loadServices = useCallback(async () => {
+    try {
+      const services = await getUniqueServices();
+      setAvailableServices(services);
+    } catch (error) {
+      console.error('Erro ao carregar serviços:', error);
+    } finally {
+      setIsLoadingServices(false);
+    }
+  }, []);
+
+  const loadRating = useCallback(async () => {
+    try {
+      const docRef = doc(db, 'ratings', id);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data() as Rating;
+        setWhatsapp(data.prestadorWhatsapp);
+        setPrestadorNome(data.prestadorNome || '');
+        setServico(data.servico || '');
+        setRating(data.rating);
+        setComment(data.comment);
+      } else {
+        show('Avaliação não encontrada.', { backgroundColor: '#ba1a1a' });
+        router.back();
+      }
+    } catch (error) {
+      console.error('Erro ao carregar avaliação:', error);
+      show('Erro ao carregar avaliação.', { backgroundColor: '#ba1a1a' });
+      router.back();
+    } finally {
+      setIsFetching(false);
+    }
+  }, [id, show]);
+
   // Carrega serviços disponíveis
   useEffect(() => {
     loadServices();
@@ -185,42 +221,6 @@ export default function RatingFormScreen() {
   const handleScroll = (event: any) => {
     scrollViewY.current = event.nativeEvent.contentOffset.y;
   };
-
-  const loadServices = useCallback(async () => {
-    try {
-      const services = await getUniqueServices();
-      setAvailableServices(services);
-    } catch (error) {
-      console.error('Erro ao carregar serviços:', error);
-    } finally {
-      setIsLoadingServices(false);
-    }
-  }, []);
-
-  const loadRating = useCallback(async () => {
-    try {
-      const docRef = doc(db, 'ratings', id);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        const data = docSnap.data() as Rating;
-        setWhatsapp(data.prestadorWhatsapp);
-        setPrestadorNome(data.prestadorNome || '');
-        setServico(data.servico || '');
-        setRating(data.rating);
-        setComment(data.comment);
-      } else {
-        show('Avaliação não encontrada.', { backgroundColor: '#ba1a1a' });
-        router.back();
-      }
-    } catch (error) {
-      console.error('Erro ao carregar avaliação:', error);
-      show('Erro ao carregar avaliação.', { backgroundColor: '#ba1a1a' });
-      router.back();
-    } finally {
-      setIsFetching(false);
-    }
-  }, [id, show]);
 
   const validate = (): boolean => {
     const newErrors: typeof errors = {};

@@ -42,13 +42,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [holdRedirect, setHoldRedirect] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (user) => {
       setAuthUser(user);
       if (!user) {
         setProfile(null);
         setIsLoading(false);
       }
-    });
+      },
+      () => {
+        setAuthUser(null);
+        setProfile(null);
+        setIsLoading(false);
+      }
+    );
 
     return unsubscribe;
   }, []);
@@ -57,14 +65,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!authUser) return;
 
     const docRef = doc(db, 'users', authUser.uid);
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setProfile(docSnap.data() as UserProfile);
-      } else {
+    const unsubscribe = onSnapshot(
+      docRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setProfile(docSnap.data() as UserProfile);
+        } else {
+          setProfile(null);
+        }
+        setIsLoading(false);
+      },
+      () => {
         setProfile(null);
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    });
+    );
 
     return unsubscribe;
   }, [authUser]);
