@@ -1,6 +1,6 @@
 import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Keyboard,
@@ -45,6 +45,8 @@ export function ServiceSelect({
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customService, setCustomService] = useState('');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const customInputRef = useRef<TextInput>(null);
+  const customFocusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const closeModal = () => {
     Keyboard.dismiss();
@@ -70,6 +72,31 @@ export function ServiceSelect({
       closeModal();
     }
   };
+
+  useEffect(() => {
+    if (!modalVisible || !showCustomInput) {
+      if (customFocusTimeoutRef.current) {
+        clearTimeout(customFocusTimeoutRef.current);
+        customFocusTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    if (customFocusTimeoutRef.current) {
+      clearTimeout(customFocusTimeoutRef.current);
+    }
+
+    customFocusTimeoutRef.current = setTimeout(() => {
+      customInputRef.current?.focus();
+    }, 140);
+
+    return () => {
+      if (customFocusTimeoutRef.current) {
+        clearTimeout(customFocusTimeoutRef.current);
+        customFocusTimeoutRef.current = null;
+      }
+    };
+  }, [modalVisible, showCustomInput]);
 
   useEffect(() => {
     if (!modalVisible || !showCustomInput) {
@@ -101,13 +128,14 @@ export function ServiceSelect({
   }, [modalVisible, showCustomInput]);
 
   const maxModalHeight = Math.min(windowHeight - 48, windowHeight * 0.88);
+  const customLayoutActive = showCustomInput && keyboardHeight > 0;
   const customModeMaxHeight = Math.max(180, Math.min(maxModalHeight, windowHeight - keyboardHeight - 24));
 
   const serviceListHeight = useMemo(() => {
     const baseHeight =
       MODAL_HEADER_HEIGHT +
       MODAL_BOTTOM_PADDING +
-      (allowCustom && !showCustomInput ? CUSTOM_ACTION_HEIGHT : 0) +
+      (allowCustom ? CUSTOM_ACTION_HEIGHT : 0) +
       EXTRA_SPACING;
 
     const availableForList = Math.max(
@@ -117,16 +145,9 @@ export function ServiceSelect({
 
     const contentHeight = services.length * OPTION_ROW_HEIGHT;
     return Math.min(contentHeight, availableForList);
-  }, [allowCustom, maxModalHeight, services.length, showCustomInput]);
+  }, [allowCustom, maxModalHeight, services.length]);
 
-  const modalHeight = useMemo(() => {
-    if (showCustomInput) {
-      return Math.min(
-        customModeMaxHeight,
-        MODAL_HEADER_HEIGHT + CUSTOM_BLOCK_HEIGHT + MODAL_BOTTOM_PADDING
-      );
-    }
-
+  const idleModalHeight = useMemo(() => {
     const bodyHeight =
       MODAL_HEADER_HEIGHT +
       serviceListHeight +
@@ -135,7 +156,22 @@ export function ServiceSelect({
       EXTRA_SPACING;
 
     return Math.min(maxModalHeight, bodyHeight);
-  }, [allowCustom, customModeMaxHeight, maxModalHeight, serviceListHeight, showCustomInput]);
+  }, [allowCustom, maxModalHeight, serviceListHeight]);
+
+  const modalHeight = useMemo(() => {
+    if (showCustomInput) {
+      if (!customLayoutActive) {
+        return idleModalHeight;
+      }
+
+      return Math.min(
+        customModeMaxHeight,
+        MODAL_HEADER_HEIGHT + CUSTOM_BLOCK_HEIGHT + MODAL_BOTTOM_PADDING
+      );
+    }
+
+    return idleModalHeight;
+  }, [customLayoutActive, customModeMaxHeight, idleModalHeight, showCustomInput]);
 
   return (
     <View style={styles.container}>
@@ -163,7 +199,7 @@ export function ServiceSelect({
         <View
           style={[
             styles.modalOverlay,
-            showCustomInput && keyboardHeight > 0 && { paddingBottom: keyboardHeight },
+            customLayoutActive && { paddingBottom: keyboardHeight },
           ]}
         >
           <View style={[styles.modalContent, { maxHeight: maxModalHeight, height: modalHeight }]}>
@@ -189,11 +225,11 @@ export function ServiceSelect({
                   <Text style={styles.customInputLabel}>Digite o nome do serviço:</Text>
                   <TextInput
                     style={styles.customInput}
+                    ref={customInputRef}
                     value={customService}
                     onChangeText={setCustomService}
                     placeholder="Ex: Eletricista, Encanador..."
                     placeholderTextColor="#9CA3AF"
-                    autoFocus
                     returnKeyType="done"
                     blurOnSubmit
                     onSubmitEditing={handleCustomSubmit}
