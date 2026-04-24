@@ -4,15 +4,6 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
-    inputs:
-      platform:
-        description: Plataforma do build
-        type: choice
-        required: true
-        default: all
-        options:
-          - android
 
 jobs:
   build:
@@ -41,7 +32,7 @@ jobs:
       - name: Rodar build na EAS
         run: |
           eas build \
-            --platform "${{ inputs.platform || 'all' }}" \
+            --platform android \
             --profile production \
             --non-interactive \
             --no-wait
