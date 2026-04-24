@@ -1,6 +1,6 @@
 import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
     Modal,
     ScrollView,
@@ -22,6 +22,7 @@ interface WhatsappInputProps {
   error?: string;
   isDark?: boolean;
   testID?: string;
+  onFocusWithPosition?: (layout: { y: number; height: number }) => void;
 }
 
 export function WhatsappInput({
@@ -33,11 +34,13 @@ export function WhatsappInput({
   error,
   isDark = false,
   testID,
+  onFocusWithPosition,
 }: WhatsappInputProps) {
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<Country>(getDefaultCountry());
   const [localValue, setLocalValue] = useState('');
   const [countryFilter, setCountryFilter] = useState('');
+  const containerRef = useRef<View>(null);
 
   // Inicializa o valor local baseado no value prop
   React.useEffect(() => {
@@ -138,8 +141,19 @@ export function WhatsappInput({
 
   const effectivePlaceholder = placeholder || selectedCountry.placeholder;
 
+  const handleInputFocus = useCallback(() => {
+    if (!onFocusWithPosition) {
+      return;
+    }
+
+    containerRef.current?.measureInWindow((...measure) => {
+      const [, y, , height] = measure;
+      onFocusWithPosition({ y, height });
+    });
+  }, [onFocusWithPosition]);
+
   return (
-    <View style={styles.container}>
+    <View ref={containerRef} style={styles.container}>
       {label && <Text style={[styles.label, isDark && styles.labelDark]}>{label}</Text>}
       
       <View style={[
@@ -173,6 +187,7 @@ export function WhatsappInput({
           placeholderTextColor={isDark ? '#666' : '#9CA3AF'}
           keyboardType="phone-pad"
           editable={!readonly}
+          onFocus={handleInputFocus}
         />
       </View>
 

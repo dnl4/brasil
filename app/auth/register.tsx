@@ -2,17 +2,19 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from 'firebase/auth';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Dimensions,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CustomDialog } from '../../components/ui/custom-dialog';
 import { InputField } from '../../components/ui/input-field';
 import { PrimaryButton } from '../../components/ui/primary-button';
@@ -31,25 +33,81 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const { show } = useSnackbar();
-  
+
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollViewY = useRef(0);
-  const insets = useSafeAreaInsets();
+  const keyboardTopRef = useRef(Dimensions.get('window').height);
+  const keyboardVisibleRef = useRef(false);
+  const keyboardScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingFocusRef = useRef<{ y: number; height: number } | null>(null);
 
-  const handleInputFocus = (inputY: number) => {
-    if (Platform.OS === 'ios') {
-      // Calcula a posição considerando o safe area e o header
-      const headerHeight = 64; // altura aproximada do header
-      const offset = inputY - insets.top - headerHeight;
-      
-      if (offset > 0) {
-        scrollViewRef.current?.scrollTo({
-          y: scrollViewY.current + offset,
-          animated: true,
-        });
-      }
+  const scrollFocusedFieldIntoView = useCallback((layout: { y: number; height: number }) => {
+    const keyboardTop = keyboardTopRef.current;
+    const fieldBottom = layout.y + layout.height;
+    const visibleBottom = keyboardTop - 24;
+
+    if (fieldBottom <= visibleBottom) {
+      return;
     }
-  };
+
+    const nextOffset = scrollViewY.current + (fieldBottom - visibleBottom) + 16;
+    scrollViewRef.current?.scrollTo({
+      y: Math.max(0, nextOffset),
+      animated: true,
+    });
+  }, []);
+
+  const handleInputFocus = useCallback((layout: { y: number; height: number }) => {
+    pendingFocusRef.current = layout;
+    if (keyboardVisibleRef.current) {
+      if (keyboardScrollTimeoutRef.current) {
+        clearTimeout(keyboardScrollTimeoutRef.current);
+      }
+
+      keyboardScrollTimeoutRef.current = setTimeout(() => {
+        scrollFocusedFieldIntoView(layout);
+      }, 120);
+    }
+  }, [scrollFocusedFieldIntoView]);
+
+  useEffect(() => {
+    const keyboardShowEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+
+    const showSubscription = Keyboard.addListener(keyboardShowEvent, (event) => {
+      keyboardVisibleRef.current = true;
+      keyboardTopRef.current = event.endCoordinates.screenY;
+
+      if (pendingFocusRef.current) {
+        if (keyboardScrollTimeoutRef.current) {
+          clearTimeout(keyboardScrollTimeoutRef.current);
+        }
+
+        keyboardScrollTimeoutRef.current = setTimeout(() => {
+          if (pendingFocusRef.current) {
+            scrollFocusedFieldIntoView(pendingFocusRef.current);
+          }
+        }, 120);
+      }
+    });
+
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      keyboardVisibleRef.current = false;
+      keyboardTopRef.current = Dimensions.get('window').height;
+
+      if (keyboardScrollTimeoutRef.current) {
+        clearTimeout(keyboardScrollTimeoutRef.current);
+        keyboardScrollTimeoutRef.current = null;
+      }
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+      if (keyboardScrollTimeoutRef.current) {
+        clearTimeout(keyboardScrollTimeoutRef.current);
+      }
+    };
+  }, [scrollFocusedFieldIntoView]);
 
   const handleScroll = (event: any) => {
     scrollViewY.current = event.nativeEvent.contentOffset.y;
@@ -61,7 +119,7 @@ export default function RegisterScreen() {
     const lastNames = ['silva', 'santos', 'oliveira', 'souza', 'lima', 'costa', 'ferreira'];
     const randomFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
     const randomLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-    
+
     setDisplayName(`${randomFirstName}${randomId.slice(0, 4)}`);
     setFullName(`${randomFirstName.charAt(0).toUpperCase() + randomFirstName.slice(1)} ${randomLastName.charAt(0).toUpperCase() + randomLastName.slice(1)}`);
     setEmail(`danilofsouza+${Date.now()}@gmail.com`);
@@ -124,16 +182,16 @@ export default function RegisterScreen() {
 
       // Criar usuário no Firebase
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      
+
       // Enviar email de verificação (a menos que EXPO_PUBLIC_SKIP_EMAIL_VERIFICATION esteja ativo)
       if (process.env.EXPO_PUBLIC_SKIP_EMAIL_VERIFICATION !== 'true') {
         // Salvar timestamp ANTES de enviar o email (pois o auth state change já aconteceu)
         await AsyncStorage.setItem('emailVerificationSentAt', Date.now().toString());
         await sendEmailVerification(userCredential.user);
       }
-      
+
       const normalizedDisplayName = displayName.trim().toLowerCase();
-      
+
       // Atualizar o perfil com o nome de exibição
       await updateProfile(userCredential.user, {
         displayName: normalizedDisplayName,
@@ -151,7 +209,7 @@ export default function RegisterScreen() {
       setShowSuccessDialog(true);
     } catch (error: any) {
       let errorMessage = 'Ocorreu um erro ao criar sua conta: ' + error.message;
-      
+
       switch (error.code) {
         case 'auth/email-already-in-use':
           errorMessage = 'Este email já está em uso.';
@@ -166,7 +224,7 @@ export default function RegisterScreen() {
           errorMessage = 'Operação não permitida.';
           break;
       }
-      
+
       show(errorMessage, { backgroundColor: '#ba1a1a' });
     } finally {
       setLoading(false);
@@ -176,9 +234,9 @@ export default function RegisterScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        keyboardVerticalOffset={0}
       >
         <ScrollView
           ref={scrollViewRef}
@@ -253,6 +311,7 @@ export default function RegisterScreen() {
               onChangeValue={setPhone}
               placeholder="Digite seu WhatsApp"
               isDark={false}
+              onFocusWithPosition={handleInputFocus}
             />
 
             {/* Password Field */}
@@ -319,7 +378,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 40,
+    paddingBottom: 96,
   },
   header: {
     flexDirection: 'row',

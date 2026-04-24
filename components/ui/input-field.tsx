@@ -13,14 +13,14 @@ type FocusEvent = Parameters<NonNullable<RNTextInputProps['onFocus']>>[0];
 interface InputFieldProps extends RNTextInputProps {
   label?: string;
   containerStyle?: ViewStyle;
-  onFocusWithPosition?: (y: number) => void;
+  onFocusWithPosition?: (layout: { y: number; height: number }) => void;
   error?: string;
   helperText?: string;
 }
 
 export interface InputFieldRef {
   focus: () => void;
-  measureLayout: (callback: (y: number) => void) => void;
+  measureLayout: (callback: (layout: { y: number; height: number }) => void) => void;
 }
 
 export const InputField = forwardRef<InputFieldRef, InputFieldProps>(({
@@ -40,8 +40,9 @@ export const InputField = forwardRef<InputFieldRef, InputFieldProps>(({
   useImperativeHandle(ref, () => ({
     focus: () => inputRef.current?.focus(),
     measureLayout: (callback) => {
-      containerRef.current?.measureInWindow((x, y) => {
-        callback(y);
+      containerRef.current?.measureInWindow((...measure) => {
+        const [, y, , height] = measure;
+        callback({ y, height });
       });
     },
   }));
@@ -50,8 +51,9 @@ export const InputField = forwardRef<InputFieldRef, InputFieldProps>(({
     onFocus?.(e);
     
     if (onFocusWithPosition) {
-      containerRef.current?.measureInWindow((x, y) => {
-        onFocusWithPosition(y);
+      containerRef.current?.measureInWindow((...measure) => {
+        const [, y, , height] = measure;
+        onFocusWithPosition({ y, height });
       });
     }
   }, [onFocus, onFocusWithPosition]);

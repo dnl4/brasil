@@ -2,8 +2,10 @@ import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { router } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Dimensions,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -12,7 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CustomDialog } from '../../components/ui/custom-dialog';
 import { InputField } from '../../components/ui/input-field';
@@ -28,24 +30,81 @@ export default function LoginScreen() {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const { setHoldRedirect } = useAuth();
   const { show } = useSnackbar();
-  
+
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollViewY = useRef(0);
-  const insets = useSafeAreaInsets();
+  const keyboardTopRef = useRef(Dimensions.get('window').height);
+  const keyboardVisibleRef = useRef(false);
+  const keyboardScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingFocusRef = useRef<{ y: number; height: number } | null>(null);
 
-  const handleInputFocus = (inputY: number) => {
-    if (Platform.OS === 'ios') {
-      const headerHeight = 64;
-      const offset = inputY - insets.top - headerHeight;
-      
-      if (offset > 0) {
-        scrollViewRef.current?.scrollTo({
-          y: scrollViewY.current + offset,
-          animated: true,
-        });
-      }
+  const scrollFocusedFieldIntoView = useCallback((layout: { y: number; height: number }) => {
+    const keyboardTop = keyboardTopRef.current;
+    const fieldBottom = layout.y + layout.height;
+    const visibleBottom = keyboardTop - 24;
+
+    if (fieldBottom <= visibleBottom) {
+      return;
     }
-  };
+
+    const nextOffset = scrollViewY.current + (fieldBottom - visibleBottom) + 16;
+    scrollViewRef.current?.scrollTo({
+      y: Math.max(0, nextOffset),
+      animated: true,
+    });
+  }, []);
+
+  const handleInputFocus = useCallback((layout: { y: number; height: number }) => {
+    pendingFocusRef.current = layout;
+    if (keyboardVisibleRef.current) {
+      if (keyboardScrollTimeoutRef.current) {
+        clearTimeout(keyboardScrollTimeoutRef.current);
+      }
+
+      keyboardScrollTimeoutRef.current = setTimeout(() => {
+        scrollFocusedFieldIntoView(layout);
+      }, 120);
+    }
+  }, [scrollFocusedFieldIntoView]);
+
+  useEffect(() => {
+    const keyboardShowEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+
+    const showSubscription = Keyboard.addListener(keyboardShowEvent, (event) => {
+      keyboardVisibleRef.current = true;
+      keyboardTopRef.current = event.endCoordinates.screenY;
+
+      if (pendingFocusRef.current) {
+        if (keyboardScrollTimeoutRef.current) {
+          clearTimeout(keyboardScrollTimeoutRef.current);
+        }
+
+        keyboardScrollTimeoutRef.current = setTimeout(() => {
+          if (pendingFocusRef.current) {
+            scrollFocusedFieldIntoView(pendingFocusRef.current);
+          }
+        }, 120);
+      }
+    });
+
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      keyboardVisibleRef.current = false;
+      keyboardTopRef.current = Dimensions.get('window').height;
+
+      if (keyboardScrollTimeoutRef.current) {
+        clearTimeout(keyboardScrollTimeoutRef.current);
+        keyboardScrollTimeoutRef.current = null;
+      }
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+      if (keyboardScrollTimeoutRef.current) {
+        clearTimeout(keyboardScrollTimeoutRef.current);
+      }
+    };
+  }, [scrollFocusedFieldIntoView]);
 
   const handleScroll = (event: any) => {
     scrollViewY.current = event.nativeEvent.contentOffset.y;
@@ -63,17 +122,17 @@ export default function LoginScreen() {
     }
 
     setIsLoading(true);
-    
+
     // Bloqueia o redirect antes de fazer login
     setHoldRedirect(true);
-    
+
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
       setShowSuccessDialog(true);
     } catch (error: any) {
       // Libera o redirect em caso de erro
       setHoldRedirect(false);
-      
+
       let message = 'Ocorreu um erro ao fazer login.';
 
       switch (error.code) {
@@ -121,9 +180,9 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        keyboardVerticalOffset={0}
       >
         <ScrollView
           ref={scrollViewRef}
@@ -229,7 +288,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 40,
+    paddingBottom: 96,
   },
   header: {
     flexDirection: 'row',

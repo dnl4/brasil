@@ -1,3 +1,5 @@
+/* global jest */
+
 // Mock Firebase
 jest.mock('./firebaseConfig', () => ({
   auth: {},
@@ -21,4 +23,14 @@ jest.mock('firebase/auth', () => ({
   signInWithEmailAndPassword: jest.fn(),
   signOut: jest.fn(),
   updateProfile: jest.fn(),
+}));
+
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    setItem: jest.fn(),
+    getItem: jest.fn(),
+    removeItem: jest.fn(),
+    clear: jest.fn(),
+  },
 }));

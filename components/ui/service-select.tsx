@@ -129,37 +129,42 @@ export function ServiceSelect({
                 </View>
               </View>
             ) : (
-              <ScrollView style={styles.optionsList}>
-                {services.map((service) => (
-                  <TouchableOpacity
-                    key={service}
-                    style={[
-                      styles.optionItem,
-                      selectedService === service && styles.optionItemSelected,
-                    ]}
-                    onPress={() => handleSelect(service)}
-                  >
-                    <Text
-                      style={[
-                        styles.optionText,
-                        selectedService === service && styles.optionTextSelected,
-                      ]}
-                    >
-                      {service}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+              <>
                 {allowCustom && (
-                  <TouchableOpacity
-                    style={[styles.optionItem, styles.otherOption]}
-                    onPress={() => handleSelect('OUTRO')}
-                  >
-                    <Text style={[styles.optionText, styles.otherOptionText]}>
-                      + Outro serviço
-                    </Text>
-                  </TouchableOpacity>
+                  <View style={styles.topAction}>
+                    <TouchableOpacity
+                      style={styles.otherOptionButton}
+                      onPress={() => handleSelect('OUTRO')}
+                    >
+                      <Text style={styles.otherOptionText}>
+                        + Outro serviço
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
-              </ScrollView>
+
+                <ScrollView style={styles.optionsList}>
+                  {services.map((service) => (
+                    <TouchableOpacity
+                      key={service}
+                      style={[
+                        styles.optionItem,
+                        selectedService === service && styles.optionItemSelected,
+                      ]}
+                      onPress={() => handleSelect(service)}
+                    >
+                      <Text
+                        style={[
+                          styles.optionText,
+                          selectedService === service && styles.optionTextSelected,
+                        ]}
+                      >
+                        {service}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </>
             )}
           </View>
         </View>
@@ -251,14 +256,19 @@ const styles = StyleSheet.create({
     color: '#0066FF',
     fontWeight: '600',
   },
-  otherOption: {
-    borderTopWidth: 2,
-    borderTopColor: '#E5E7EB',
-    marginTop: 8,
+  topAction: {
+    paddingHorizontal: 24,
+    paddingTop: 12,
   },
   otherOptionText: {
     color: '#0066FF',
     fontWeight: '600',
+  },
+  otherOptionButton: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderRadius: 12,
+    backgroundColor: '#EEF4FF',
   },
   customInputContainer: {
     padding: 24,
