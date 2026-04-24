@@ -72,6 +72,8 @@ export const InputField = forwardRef<InputFieldRef, InputFieldProps>(({
   );
 });
 
+InputField.displayName = 'InputField';
+
 const styles = StyleSheet.create({
   container: {
     marginBottom: 20,

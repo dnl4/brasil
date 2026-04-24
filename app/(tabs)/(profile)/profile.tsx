@@ -109,7 +109,6 @@ export default function ProfileScreen() {
   const confirmLogout = async () => {
     try {
       await signOut(auth);
-      router.replace('/auth/welcome');
     } catch (error) {
       console.error('Erro ao sair:', error);
     }
