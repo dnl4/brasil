@@ -1,6 +1,6 @@
 import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -10,6 +10,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
@@ -22,14 +23,23 @@ interface ServiceSelectProps {
   allowCustom?: boolean;
 }
 
+const OPTION_ROW_HEIGHT = 57;
+const MODAL_HORIZONTAL_PADDING = 24;
+const MODAL_BOTTOM_PADDING = 40;
+const MODAL_HEADER_HEIGHT = 73;
+const CUSTOM_BLOCK_HEIGHT = 182;
+const CUSTOM_ACTION_HEIGHT = 72;
+const EXTRA_SPACING = 16;
+
 export function ServiceSelect({
   services,
   selectedService,
   onSelectService,
-  placeholder = 'Selecione um serviÃ§o',
+  placeholder = 'Selecione um serviço',
   label,
   allowCustom = false,
 }: ServiceSelectProps) {
+  const { height: windowHeight } = useWindowDimensions();
   const [modalVisible, setModalVisible] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customService, setCustomService] = useState('');
@@ -57,6 +67,42 @@ export function ServiceSelect({
     }
   };
 
+  const maxModalHeight = Math.min(windowHeight - 48, windowHeight * 0.88);
+
+  const serviceListHeight = useMemo(() => {
+    const baseHeight =
+      MODAL_HEADER_HEIGHT +
+      MODAL_BOTTOM_PADDING +
+      (allowCustom && !showCustomInput ? CUSTOM_ACTION_HEIGHT : 0) +
+      EXTRA_SPACING;
+
+    const availableForList = Math.max(
+      120,
+      maxModalHeight - baseHeight - MODAL_HORIZONTAL_PADDING
+    );
+
+    const contentHeight = services.length * OPTION_ROW_HEIGHT;
+    return Math.min(contentHeight, availableForList);
+  }, [allowCustom, maxModalHeight, services.length, showCustomInput]);
+
+  const modalHeight = useMemo(() => {
+    if (showCustomInput) {
+      return Math.min(
+        maxModalHeight,
+        MODAL_HEADER_HEIGHT + CUSTOM_BLOCK_HEIGHT + MODAL_BOTTOM_PADDING
+      );
+    }
+
+    const bodyHeight =
+      MODAL_HEADER_HEIGHT +
+      serviceListHeight +
+      (allowCustom ? CUSTOM_ACTION_HEIGHT : 0) +
+      MODAL_BOTTOM_PADDING +
+      EXTRA_SPACING;
+
+    return Math.min(maxModalHeight, bodyHeight);
+  }, [allowCustom, maxModalHeight, serviceListHeight, showCustomInput]);
+
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
@@ -81,10 +127,10 @@ export function ServiceSelect({
         onRequestClose={closeModal}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { maxHeight: maxModalHeight, height: modalHeight }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {showCustomInput ? 'Novo serviÃ§o' : 'Selecione o serviÃ§o'}
+                {showCustomInput ? 'Novo serviço' : 'Selecione o serviço'}
               </Text>
               <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
                 <Text style={styles.closeButtonText}>Fechar</Text>
@@ -101,7 +147,7 @@ export function ServiceSelect({
                   keyboardShouldPersistTaps="handled"
                   showsVerticalScrollIndicator={false}
                 >
-                  <Text style={styles.customInputLabel}>Digite o nome do serviÃ§o:</Text>
+                  <Text style={styles.customInputLabel}>Digite o nome do serviço:</Text>
                   <TextInput
                     style={styles.customInput}
                     value={customService}
@@ -138,23 +184,12 @@ export function ServiceSelect({
               </KeyboardAvoidingView>
             ) : (
               <View style={styles.modalBody}>
-                {allowCustom && (
-                  <View style={styles.topAction}>
-                    <TouchableOpacity
-                      style={styles.otherOptionButton}
-                      onPress={() => handleSelect('OUTRO')}
-                    >
-                      <Text style={styles.otherOptionText}>+ Outro serviÃ§o</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-
                 <ScrollView
-                  style={styles.optionsList}
+                  style={[styles.optionsList, { maxHeight: serviceListHeight }]}
                   contentContainerStyle={styles.optionsListContent}
                   keyboardShouldPersistTaps="handled"
                   nestedScrollEnabled
-                  showsVerticalScrollIndicator={true}
+                  showsVerticalScrollIndicator={services.length * OPTION_ROW_HEIGHT > serviceListHeight}
                 >
                   {services.map((service) => (
                     <TouchableOpacity
@@ -176,6 +211,17 @@ export function ServiceSelect({
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
+
+                {allowCustom && (
+                  <View style={styles.topAction}>
+                    <TouchableOpacity
+                      style={styles.otherOptionButton}
+                      onPress={() => handleSelect('OUTRO')}
+                    >
+                      <Text style={styles.otherOptionText}>+ Outro serviço</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             )}
           </View>
@@ -223,10 +269,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '80%',
-    minHeight: 220,
-    paddingBottom: 40,
     width: '100%',
+    overflow: 'hidden',
   },
   modalBody: {
     flex: 1,
@@ -257,28 +301,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionsListContent: {
-    paddingBottom: 16,
+    paddingBottom: 8,
   },
   optionItem: {
+    minHeight: OPTION_ROW_HEIGHT,
+    justifyContent: 'center',
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
   optionItemSelected: {
-    backgroundColor: '#EBF5FF',
+    backgroundColor: '#F9FAFB',
   },
   optionText: {
     fontSize: 16,
     color: '#374151',
   },
   optionTextSelected: {
-    color: '#0066FF',
+    color: '#000',
     fontWeight: '600',
   },
   topAction: {
     paddingHorizontal: 24,
     paddingTop: 12,
+    paddingBottom: 16,
   },
   otherOptionText: {
     color: '#0066FF',
