@@ -1,8 +1,9 @@
 import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Keyboard,
   Modal,
   Platform,
   ScrollView,
@@ -43,11 +44,14 @@ export function ServiceSelect({
   const [modalVisible, setModalVisible] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customService, setCustomService] = useState('');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const closeModal = () => {
+    Keyboard.dismiss();
     setModalVisible(false);
     setShowCustomInput(false);
     setCustomService('');
+    setKeyboardHeight(0);
   };
 
   const handleSelect = (service: string) => {
@@ -67,7 +71,37 @@ export function ServiceSelect({
     }
   };
 
+  useEffect(() => {
+    if (!modalVisible || !showCustomInput) {
+      setKeyboardHeight(0);
+      return;
+    }
+
+    const syncKeyboardHeight = (event: any) => {
+      setKeyboardHeight(event?.endCoordinates?.height ?? 0);
+    };
+
+    const showSubscription = Keyboard.addListener('keyboardDidShow', syncKeyboardHeight);
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardHeight(0);
+    });
+    const frameSubscriptions =
+      Platform.OS === 'ios'
+        ? [
+            Keyboard.addListener('keyboardWillChangeFrame', syncKeyboardHeight),
+            Keyboard.addListener('keyboardDidChangeFrame', syncKeyboardHeight),
+          ]
+        : [];
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+      frameSubscriptions.forEach((subscription) => subscription.remove());
+    };
+  }, [modalVisible, showCustomInput]);
+
   const maxModalHeight = Math.min(windowHeight - 48, windowHeight * 0.88);
+  const customModeMaxHeight = Math.max(180, Math.min(maxModalHeight, windowHeight - keyboardHeight - 24));
 
   const serviceListHeight = useMemo(() => {
     const baseHeight =
@@ -88,7 +122,7 @@ export function ServiceSelect({
   const modalHeight = useMemo(() => {
     if (showCustomInput) {
       return Math.min(
-        maxModalHeight,
+        customModeMaxHeight,
         MODAL_HEADER_HEIGHT + CUSTOM_BLOCK_HEIGHT + MODAL_BOTTOM_PADDING
       );
     }
@@ -101,7 +135,7 @@ export function ServiceSelect({
       EXTRA_SPACING;
 
     return Math.min(maxModalHeight, bodyHeight);
-  }, [allowCustom, maxModalHeight, serviceListHeight, showCustomInput]);
+  }, [allowCustom, customModeMaxHeight, maxModalHeight, serviceListHeight, showCustomInput]);
 
   return (
     <View style={styles.container}>
@@ -126,7 +160,12 @@ export function ServiceSelect({
         statusBarTranslucent
         onRequestClose={closeModal}
       >
-        <View style={styles.modalOverlay}>
+        <View
+          style={[
+            styles.modalOverlay,
+            showCustomInput && keyboardHeight > 0 && { paddingBottom: keyboardHeight },
+          ]}
+        >
           <View style={[styles.modalContent, { maxHeight: maxModalHeight, height: modalHeight }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
@@ -163,6 +202,7 @@ export function ServiceSelect({
                     <TouchableOpacity
                       style={styles.customButtonCancel}
                       onPress={() => {
+                        Keyboard.dismiss();
                         setShowCustomInput(false);
                         setCustomService('');
                       }}
