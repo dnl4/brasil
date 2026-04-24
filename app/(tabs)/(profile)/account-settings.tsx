@@ -3,7 +3,7 @@ import {
   UserIcon
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
-import { updateProfile, verifyBeforeUpdateEmail } from 'firebase/auth';
+import { signOut, updateProfile, verifyBeforeUpdateEmail } from 'firebase/auth';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -48,6 +48,7 @@ export default function ContactSettingsScreen() {
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showEmailChangeDialog, setShowEmailChangeDialog] = useState(false);
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [inputCode, setInputCode] = useState('');
   const scrollViewRef = useRef<ScrollView>(null);
@@ -295,15 +296,28 @@ export default function ContactSettingsScreen() {
 
     // Solicitar verificacao do novo e-mail antes de aplicar a troca
     if (email.trim() !== (user?.email ?? '').trim() && email.trim()) {
-      await verifyBeforeUpdateEmail(auth.currentUser, email.trim());
-      snackbar.show('Enviamos uma verificacao para o novo e-mail. A alteracao sera concluida apos a confirmacao.', { backgroundColor: '#4CAF50' });
-      setOriginalPhone(phone.trim());
+      try {
+        await verifyBeforeUpdateEmail(auth.currentUser, email.trim());
+        setOriginalPhone(phone.trim());
+        setShowEmailChangeDialog(true);
+        return;
+      } catch (error: any) {
+        if (error?.code === 'auth/requires-recent-login') {
+          snackbar.show(
+            'Seu perfil foi salvo, mas para alterar o e-mail voce precisa fazer login novamente.',
+            { backgroundColor: '#F59E0B' }
+          );
+        } else {
+          throw error;
+        }
+      }
+
       setShowSuccessDialog(true);
       return;
     }
 
-    setOriginalPhone(phone.trim());
-    setShowSuccessDialog(true);
+      setOriginalPhone(phone.trim());
+      setShowSuccessDialog(true);
   };
 
   if (loadingProfile) {
@@ -461,6 +475,24 @@ export default function ContactSettingsScreen() {
         ]}
         onClose={() => {
           setShowSuccessDialog(false);
+        }}
+      />
+
+      <CustomDialog
+        visible={showEmailChangeDialog}
+        title="Confirme o e-mail"
+        message="Enviamos um link de confirmação para o novo e-mail. A alteração só será concluída depois que você clicar no link recebido. Verifique também a caixa de spam."
+        buttons={[
+          {
+            text: 'OK',
+            onPress: () => {
+              setShowEmailChangeDialog(false);
+              void signOut(auth);
+            },
+          },
+        ]}
+        onClose={() => {
+          setShowEmailChangeDialog(false);
         }}
       />
 
