@@ -8,6 +8,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "build:test": "eas build --platform all --profile preview",
+    "build:prod": "eas build --platform all --profile production",
     "lint": "expo lint",
     "test": "jest --watchAll"
   },
