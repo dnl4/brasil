@@ -1,0 +1,46 @@
+name: EAS Build Produção
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Plataforma do build
+        type: choice
+        required: true
+        default: all
+        options:
+          - all
+          - ios
+          - android
+
+jobs:
+  build:
+    name: Build de produção na EAS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Expo e EAS
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Rodar build na EAS
+        run: |
+          eas build \
+            --platform "${{ inputs.platform }}" \
+            --profile production \
+            --non-interactive \
+            --no-wait
