@@ -19,7 +19,6 @@ import {
   TouchableWithoutFeedback,
   View
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -62,10 +61,6 @@ export default function ContactSettingsScreen() {
   const keyboardSettledTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const keyboardScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingFocusRef = useRef<{ y: number; height: number } | null>(null);
-
-  useEffect(() => {
-    loadUserProfile();
-  }, [user]);
 
   const scrollFocusedFieldIntoView = useCallback((layout: { y: number; height: number }) => {
     const keyboardTop = keyboardTopRef.current;
@@ -166,9 +161,9 @@ export default function ContactSettingsScreen() {
     scrollViewY.current = event.nativeEvent.contentOffset.y;
   };
 
-  const loadUserProfile = async () => {
+  const loadUserProfile = useCallback(async () => {
     if (!user) return;
-    
+
     setLoadingProfile(true);
     try {
       const profile = await getUserProfile(user.uid);
@@ -183,7 +178,11 @@ export default function ContactSettingsScreen() {
     } finally {
       setLoadingProfile(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    loadUserProfile();
+  }, [loadUserProfile]);
 
   const handleSave = async () => {
     if (!auth.currentUser || !user) return;
@@ -327,6 +326,7 @@ export default function ContactSettingsScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
           bounces={false}
           onScroll={handleScroll}
           scrollEventThrottle={16}
