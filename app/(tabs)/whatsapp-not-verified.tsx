@@ -10,7 +10,6 @@ import {
   verifyCode,
 } from '@/services/whatsapp-service';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -124,7 +123,6 @@ export default function WhatsAppNotVerifiedScreen() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    router.replace('/auth/login');
   };
 
   return (

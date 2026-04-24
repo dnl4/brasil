@@ -1,7 +1,6 @@
 
 import {
   ArrowRight01Icon,
-  Bug02Icon,
   Idea01Icon,
   LockPasswordIcon,
   Logout01Icon,
@@ -11,7 +10,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { useRouter } from 'expo-router';
 import { signOut } from 'firebase/auth';
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Alert,
   Animated,
@@ -83,7 +82,6 @@ export default function ProfileScreen() {
   const isDark = colorScheme === 'dark';
   const colors = Colors[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState<'trips' | 'connections'>('trips');
   const scrollY = new Animated.Value(0);
 
   const handleLogoutPress = () => {
@@ -111,34 +109,8 @@ export default function ProfileScreen() {
   const confirmLogout = async () => {
     try {
       await signOut(auth);
-      router.replace('/auth/welcome');
     } catch (error) {
       console.error('Erro ao sair:', error);
-    }
-  };
-
-  const handleDebugPress = () => {
-    const debugInfo = {
-      uid: user?.uid,
-      email: user?.email,
-      displayName: user?.displayName,
-      photoURL: user?.photoURL,
-      emailVerified: user?.emailVerified,
-      creationTime: user?.metadata?.creationTime,
-      lastSignInTime: user?.metadata?.lastSignInTime,
-      providerData: user?.providerData,
-    };
-    
-    if (Platform.OS === 'web') {
-      console.log('=== DEBUG USER INFO ===');
-      console.log(JSON.stringify(debugInfo, null, 2));
-      alert('Dados do usuário:\n\n' + JSON.stringify(debugInfo, null, 2));
-    } else {
-      Alert.alert(
-        '🐛 Debug - User Info',
-        JSON.stringify(debugInfo, null, 2),
-        [{ text: 'OK' }]
-      );
     }
   };
 
@@ -223,54 +195,6 @@ export default function ProfileScreen() {
           <ThemedText style={styles.userName}>{displayName}</ThemedText>
         </Animated.View>
 
-        {/* Tabs (estado expandido) */}
-        <Animated.View style={[styles.tabsContainer, { opacity: expandedContentOpacity }]}>
-          <Pressable
-            style={[
-              styles.tabButton,
-              activeTab === 'trips' && styles.tabButtonActive,
-              {
-                backgroundColor: activeTab === 'trips'
-                  ? (isDark ? '#333' : '#f0f0f0')
-                  : 'transparent',
-                borderColor: isDark ? '#444' : '#ddd',
-              },
-            ]}
-            onPress={() => setActiveTab('trips')}
-          >
-            <ThemedText
-              style={[
-                styles.tabButtonText,
-                activeTab === 'trips' && styles.tabButtonTextActive,
-              ]}
-            >
-              Viagens anteriores
-            </ThemedText>
-          </Pressable>
-          <Pressable
-            style={[
-              styles.tabButton,
-              activeTab === 'connections' && styles.tabButtonActive,
-              {
-                backgroundColor: activeTab === 'connections'
-                  ? (isDark ? '#333' : '#f0f0f0')
-                  : 'transparent',
-                borderColor: isDark ? '#444' : '#ddd',
-              },
-            ]}
-            onPress={() => setActiveTab('connections')}
-          >
-            <ThemedText
-              style={[
-                styles.tabButtonText,
-                activeTab === 'connections' && styles.tabButtonTextActive,
-              ]}
-            >
-              Conexões
-            </ThemedText>
-          </Pressable>
-        </Animated.View>
-
         {/* Estado Colapsado - Título "Perfil" + avatar pequeno */}
         <Animated.View
           style={[
@@ -323,7 +247,6 @@ export default function ProfileScreen() {
         >
           <MenuItem icon={Settings01FreeIcons} label="Configurações de conta" onPress={() => router.push('/(tabs)/(profile)/account-settings')} showDivider fullWidthDivider />
           <MenuItem icon={Idea01Icon} label="Sugestões de melhorias" onPress={() => router.push('/(tabs)/(profile)/suggestions')} showDivider fullWidthDivider />
-          <MenuItem icon={Bug02Icon} label="🐛 Debug User Info" onPress={handleDebugPress} showDivider fullWidthDivider />
           <MenuItem icon={LockPasswordIcon} label="Alterar senha" onPress={() => router.push('/(tabs)/(profile)/change-password')} showDivider fullWidthDivider />
           <MenuItem
             icon={Logout01Icon}
@@ -372,28 +295,6 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  tabButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 25,
-    borderWidth: 1,
-  },
-  tabButtonActive: {
-    borderColor: 'transparent',
-  },
-  tabButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  tabButtonTextActive: {
-    fontWeight: '600',
   },
   collapsedHeader: {
     position: 'absolute',

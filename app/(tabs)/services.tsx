@@ -51,6 +51,8 @@ export default function ServicesScreen() {
   const [ratingsModalVisible, setRatingsModalVisible] = useState(false);
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [selectedRatingForReport, setSelectedRatingForReport] = useState<Rating | null>(null);
+  const [pendingDeleteRating, setPendingDeleteRating] = useState<Rating | null>(null);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
 
   useEffect(() => {
     loadServices();
@@ -139,6 +141,11 @@ export default function ServicesScreen() {
     });
   };
 
+  const handleDeletePress = (rating: Rating) => {
+    setPendingDeleteRating(rating);
+    setDeleteConfirmVisible(true);
+  };
+
   const handleDeleteRating = async (rating: Rating) => {
     if (!selectedProvider) return;
 
@@ -151,9 +158,11 @@ export default function ServicesScreen() {
       
       if (updatedRatings.length === 0) {
         // Remove o provider se não tiver mais avaliações
-        setProviders(providers.filter((p) => 
-          p.prestadorWhatsapp !== selectedProvider.prestadorWhatsapp
-        ));
+        setProviders((currentProviders) =>
+          currentProviders.filter((p) =>
+            p.prestadorWhatsapp !== selectedProvider.prestadorWhatsapp
+          )
+        );
         setRatingsModalVisible(false);
         setSelectedProvider(null);
       } else {
@@ -168,9 +177,11 @@ export default function ServicesScreen() {
           averageRating: calculateAverageRating(updatedRatings),
         };
         setSelectedProvider(updatedProvider);
-        setProviders(providers.map((p) => 
-          p.prestadorWhatsapp === selectedProvider.prestadorWhatsapp ? updatedProvider : p
-        ));
+        setProviders((currentProviders) =>
+          currentProviders.map((p) =>
+            p.prestadorWhatsapp === selectedProvider.prestadorWhatsapp ? updatedProvider : p
+          )
+        );
       }
     } catch (error) {
       console.error('Erro ao excluir avaliação:', error);
@@ -316,7 +327,19 @@ export default function ServicesScreen() {
           }}
           onEdit={handleEditRating}
           onDelete={handleDeleteRating}
+          onDeletePress={handleDeletePress}
           onReport={handleReportRating}
+          deleteConfirmVisible={deleteConfirmVisible}
+          pendingDeleteRating={pendingDeleteRating}
+          onDeleteConfirm={(rating) => {
+            handleDeleteRating(rating);
+            setDeleteConfirmVisible(false);
+            setPendingDeleteRating(null);
+          }}
+          onDeleteCancel={() => {
+            setDeleteConfirmVisible(false);
+            setPendingDeleteRating(null);
+          }}
         />
       )}
 

@@ -3,21 +3,22 @@ import {
   UserIcon
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
-import { useRouter } from 'expo-router';
-import { updateEmail, updateProfile } from 'firebase/auth';
-import React, { useEffect, useState } from 'react';
+import { signOut, updateProfile, verifyBeforeUpdateEmail } from 'firebase/auth';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Dimensions,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
   ScrollView,
   StyleSheet,
+  TextInput as RNTextInput,
   TextInput,
   TouchableWithoutFeedback,
   View
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -34,11 +35,9 @@ import { generateVerificationCode, sendVerificationCode, storeVerificationCode, 
 
 export default function ContactSettingsScreen() {
   const { user } = useAuth();
-  const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const colors = Colors[colorScheme ?? 'light'];
-  const insets = useSafeAreaInsets();
   const snackbar = useSnackbar();
 
   const [displayName, setDisplayName] = useState('');
@@ -49,18 +48,123 @@ export default function ContactSettingsScreen() {
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showEmailChangeDialog, setShowEmailChangeDialog] = useState(false);
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('');
   const [inputCode, setInputCode] = useState('');
-  const [sendingCode, setSendingCode] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewY = useRef(0);
+  const displayNameInputRef = useRef<RNTextInput>(null);
+  const fullNameInputRef = useRef<RNTextInput>(null);
+  const emailInputRef = useRef<RNTextInput>(null);
+  const codeInputRef = useRef<RNTextInput>(null);
+  const keyboardTopRef = useRef(Dimensions.get('window').height);
+  const keyboardVisibleRef = useRef(false);
+  const keyboardSettledTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const keyboardScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingFocusRef = useRef<{ y: number; height: number } | null>(null);
+
+  const scrollFocusedFieldIntoView = useCallback((layout: { y: number; height: number }) => {
+    const keyboardTop = keyboardTopRef.current;
+    const fieldBottom = layout.y + layout.height;
+    const visibleBottom = keyboardTop - 24;
+
+    if (fieldBottom <= visibleBottom) {
+      return;
+    }
+
+    const nextOffset = scrollViewY.current + (fieldBottom - visibleBottom) + 16;
+    scrollViewRef.current?.scrollTo({
+      y: Math.max(0, nextOffset),
+      animated: true,
+    });
+  }, []);
+
+  const scheduleScrollForFocusedField = useCallback((layout: { y: number; height: number }) => {
+    pendingFocusRef.current = layout;
+
+    if (keyboardScrollTimeoutRef.current) {
+      clearTimeout(keyboardScrollTimeoutRef.current);
+    }
+
+    keyboardScrollTimeoutRef.current = setTimeout(() => {
+      scrollFocusedFieldIntoView(layout);
+    }, 180);
+  }, [scrollFocusedFieldIntoView]);
+
+  const handleFieldFocus = useCallback((inputRef: React.RefObject<RNTextInput>) => {
+    inputRef.current?.measureInWindow((...measure) => {
+      const [, y, , height] = measure;
+      const layout = { y, height };
+
+      if (keyboardVisibleRef.current) {
+        scheduleScrollForFocusedField(layout);
+      } else {
+        pendingFocusRef.current = layout;
+      }
+    });
+  }, [scheduleScrollForFocusedField]);
 
   useEffect(() => {
-    loadUserProfile();
-  }, [user]);
+    const syncKeyboardFrame = (event: any) => {
+      keyboardVisibleRef.current = true;
+      keyboardTopRef.current = event.endCoordinates.screenY;
 
-  const loadUserProfile = async () => {
+      if (pendingFocusRef.current) {
+        if (keyboardSettledTimeoutRef.current) {
+          clearTimeout(keyboardSettledTimeoutRef.current);
+        }
+
+        keyboardSettledTimeoutRef.current = setTimeout(() => {
+          if (pendingFocusRef.current) {
+            scheduleScrollForFocusedField(pendingFocusRef.current);
+          }
+        }, 60);
+      }
+    };
+
+    const showSubscription = Keyboard.addListener('keyboardDidShow', syncKeyboardFrame);
+    const frameSubscriptions =
+      Platform.OS === 'ios'
+        ? [
+            Keyboard.addListener('keyboardWillChangeFrame', syncKeyboardFrame),
+            Keyboard.addListener('keyboardDidChangeFrame', syncKeyboardFrame),
+          ]
+        : [];
+
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      keyboardVisibleRef.current = false;
+      keyboardTopRef.current = Dimensions.get('window').height;
+
+      if (keyboardScrollTimeoutRef.current) {
+        clearTimeout(keyboardScrollTimeoutRef.current);
+        keyboardScrollTimeoutRef.current = null;
+      }
+      if (keyboardSettledTimeoutRef.current) {
+        clearTimeout(keyboardSettledTimeoutRef.current);
+        keyboardSettledTimeoutRef.current = null;
+      }
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+      frameSubscriptions.forEach((subscription) => subscription.remove());
+      if (keyboardScrollTimeoutRef.current) {
+        clearTimeout(keyboardScrollTimeoutRef.current);
+      }
+      if (keyboardSettledTimeoutRef.current) {
+        clearTimeout(keyboardSettledTimeoutRef.current);
+      }
+    };
+  }, [scheduleScrollForFocusedField]);
+
+  const handleScroll = (event: any) => {
+    scrollViewY.current = event.nativeEvent.contentOffset.y;
+  };
+
+  const loadUserProfile = useCallback(async () => {
     if (!user) return;
-    
+
     setLoadingProfile(true);
     try {
       const profile = await getUserProfile(user.uid);
@@ -75,7 +179,11 @@ export default function ContactSettingsScreen() {
     } finally {
       setLoadingProfile(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    loadUserProfile();
+  }, [loadUserProfile]);
 
   const handleSave = async () => {
     if (!auth.currentUser || !user) return;
@@ -130,10 +238,8 @@ export default function ContactSettingsScreen() {
   const sendVerificationToPhone = async () => {
     if (!phone.trim()) return;
 
-    setSendingCode(true);
     try {
       const code = generateVerificationCode();
-      setVerificationCode(code);
       storeVerificationCode(phone, code);
       
       await sendVerificationCode(phone, code);
@@ -143,8 +249,6 @@ export default function ContactSettingsScreen() {
     } catch (error) {
       console.error('Erro ao enviar código:', error);
       snackbar.show('Erro ao enviar código de verificação', { backgroundColor: '#F44336' });
-    } finally {
-      setSendingCode(false);
     }
   };
 
@@ -190,13 +294,30 @@ export default function ContactSettingsScreen() {
       displayName: displayName.trim().toLowerCase(),
     });
 
-    // Atualizar e-mail se foi alterado
-    if (email !== user?.email && email.trim()) {
-      await updateEmail(auth.currentUser, email.trim());
+    // Solicitar verificacao do novo e-mail antes de aplicar a troca
+    if (email.trim() !== (user?.email ?? '').trim() && email.trim()) {
+      try {
+        await verifyBeforeUpdateEmail(auth.currentUser, email.trim());
+        setOriginalPhone(phone.trim());
+        setShowEmailChangeDialog(true);
+        return;
+      } catch (error: any) {
+        if (error?.code === 'auth/requires-recent-login') {
+          snackbar.show(
+            'Seu perfil foi salvo, mas para alterar o e-mail voce precisa fazer login novamente.',
+            { backgroundColor: '#F59E0B' }
+          );
+        } else {
+          throw error;
+        }
+      }
+
+      setShowSuccessDialog(true);
+      return;
     }
 
-    setOriginalPhone(phone.trim());
-    setShowSuccessDialog(true);
+      setOriginalPhone(phone.trim());
+      setShowSuccessDialog(true);
   };
 
   if (loadingProfile) {
@@ -214,9 +335,15 @@ export default function ContactSettingsScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
+          ref={scrollViewRef}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+          bounces={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         >
           {/* Display Name Field */}
           <View style={styles.fieldContainer}>
@@ -225,6 +352,7 @@ export default function ContactSettingsScreen() {
               <ThemedText style={styles.label}>Nome de exibição</ThemedText>
             </View>
             <TextInput
+              ref={displayNameInputRef}
               style={[
                 styles.input,
                 {
@@ -240,6 +368,7 @@ export default function ContactSettingsScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               maxLength={20}
+              onFocus={() => handleFieldFocus(displayNameInputRef)}
             />
             <ThemedText style={styles.helperText}>
               Apenas letras e números, sem espaços (3-20 caracteres)
@@ -253,6 +382,7 @@ export default function ContactSettingsScreen() {
               <ThemedText style={styles.label}>Nome completo</ThemedText>
             </View>
             <TextInput
+              ref={fullNameInputRef}
               style={[
                 styles.input,
                 {
@@ -266,6 +396,7 @@ export default function ContactSettingsScreen() {
               placeholder="Seu nome completo"
               placeholderTextColor={isDark ? '#666' : '#999'}
               autoCapitalize="words"
+              onFocus={() => handleFieldFocus(fullNameInputRef)}
             />
             <ThemedText style={styles.helperText}>
               Mantido em privado, não será exibido publicamente
@@ -279,6 +410,7 @@ export default function ContactSettingsScreen() {
               <ThemedText style={styles.label}>E-mail</ThemedText>
             </View>
             <TextInput
+              ref={emailInputRef}
               style={[
                 styles.input,
                 {
@@ -294,6 +426,7 @@ export default function ContactSettingsScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              onFocus={() => handleFieldFocus(emailInputRef)}
             />
           </View>
 
@@ -305,6 +438,12 @@ export default function ContactSettingsScreen() {
               label="WhatsApp"
               placeholder="Digite seu WhatsApp"
               isDark={isDark}
+              onFocusWithPosition={(layout) => {
+                pendingFocusRef.current = layout;
+                if (keyboardVisibleRef.current) {
+                  scheduleScrollForFocusedField(layout);
+                }
+              }}
             />
             <ThemedText style={styles.helperText}>
               A alteração do WhatsApp pode requerer verificação
@@ -339,11 +478,31 @@ export default function ContactSettingsScreen() {
         }}
       />
 
+      <CustomDialog
+        visible={showEmailChangeDialog}
+        title="Confirme o e-mail"
+        message="Enviamos um link de confirmação para o novo e-mail. A alteração só será concluída depois que você clicar no link recebido. Verifique também a caixa de spam."
+        buttons={[
+          {
+            text: 'OK',
+            onPress: () => {
+              setShowEmailChangeDialog(false);
+              void signOut(auth);
+            },
+          },
+        ]}
+        onClose={() => {
+          setShowEmailChangeDialog(false);
+        }}
+      />
+
       {/* Modal de verificação com input */}
       <Modal
         visible={showVerificationDialog}
         transparent
         animationType="fade"
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
         onRequestClose={() => {
           setShowVerificationDialog(false);
           setInputCode('');
@@ -352,6 +511,10 @@ export default function ContactSettingsScreen() {
         <TouchableWithoutFeedback>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
+              <KeyboardAvoidingView
+                style={styles.modalKeyboardAvoiding}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              >
               <View style={[styles.modalContent, { backgroundColor: isDark ? '#1f1f1f' : '#fff' }]}>
                 <ThemedText style={styles.modalTitle}>Verificação WhatsApp</ThemedText>
                 <ThemedText style={styles.modalMessage}>
@@ -359,6 +522,7 @@ export default function ContactSettingsScreen() {
                 </ThemedText>
 
                 <TextInput
+                  ref={codeInputRef}
                   style={[
                     styles.codeInput,
                     {
@@ -374,6 +538,7 @@ export default function ContactSettingsScreen() {
                   keyboardType="number-pad"
                   maxLength={6}
                   autoFocus
+                  onFocus={() => handleFieldFocus(codeInputRef)}
                 />
 
                 <View style={styles.modalButtons}>
@@ -395,6 +560,7 @@ export default function ContactSettingsScreen() {
                   </View>
                 </View>
               </View>
+              </KeyboardAvoidingView>
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
@@ -419,7 +585,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 96,
   },
   fieldContainer: {
     marginBottom: 24,
@@ -459,11 +625,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
+  modalKeyboardAvoiding: {
+    width: '100%',
+    alignItems: 'center',
+  },
   modalContent: {
     borderRadius: 20,
     padding: 24,
     width: '100%',
     maxWidth: 340,
+    maxHeight: '80%',
     alignItems: 'center',
   },
   modalTitle: {

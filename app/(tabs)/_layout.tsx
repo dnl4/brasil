@@ -1,6 +1,6 @@
 import { FileAttachmentIcon, MessageSearch01Icon, StarIcon, UserIcon, UserSearch01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
-import { Redirect, Tabs } from 'expo-router';
+import { Tabs } from 'expo-router';
 import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
@@ -13,7 +13,7 @@ export default function TabLayout() {
   const inactiveColor = '#9CA3AF';
   const { user } = useAuth();
   if (!user) {
-    return <Redirect href="/auth/login" />;
+    return null;
   }
 
   if (!user?.emailVerified && process.env.EXPO_PUBLIC_SKIP_EMAIL_VERIFICATION !== 'true') {

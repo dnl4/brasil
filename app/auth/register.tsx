@@ -2,22 +2,24 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from 'firebase/auth';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Dimensions,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CustomDialog } from '../../components/ui/custom-dialog';
-import { InputField } from '../../components/ui/input-field';
+import { InputField, type InputFieldRef } from '../../components/ui/input-field';
 import { PrimaryButton } from '../../components/ui/primary-button';
 import { useSnackbar } from '../../components/ui/snackbar';
-import { WhatsappInput } from '../../components/ui/whatsapp-input';
+import { WhatsappInput, type WhatsappInputRef } from '../../components/ui/whatsapp-input';
 import { auth } from '../../firebaseConfig';
 import { isDisplayNameAvailable, isPhoneNumberAvailable, updateUserProfile, validateDisplayNameFormat } from '../../services/user-service';
 
@@ -31,43 +33,113 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const { show } = useSnackbar();
-  
+
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollViewY = useRef(0);
-  const insets = useSafeAreaInsets();
+  const displayNameRef = useRef<InputFieldRef>(null);
+  const fullNameRef = useRef<InputFieldRef>(null);
+  const emailRef = useRef<InputFieldRef>(null);
+  const whatsappRef = useRef<WhatsappInputRef>(null);
+  const passwordRef = useRef<InputFieldRef>(null);
+  const confirmPasswordRef = useRef<InputFieldRef>(null);
+  const keyboardTopRef = useRef(Dimensions.get('window').height);
+  const keyboardVisibleRef = useRef(false);
+  const keyboardSettledTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const keyboardScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingFocusRef = useRef<{ y: number; height: number } | null>(null);
 
-  const handleInputFocus = (inputY: number) => {
-    if (Platform.OS === 'ios') {
-      // Calcula a posição considerando o safe area e o header
-      const headerHeight = 64; // altura aproximada do header
-      const offset = inputY - insets.top - headerHeight;
-      
-      if (offset > 0) {
-        scrollViewRef.current?.scrollTo({
-          y: scrollViewY.current + offset,
-          animated: true,
-        });
-      }
+  const scrollFocusedFieldIntoView = useCallback((layout: { y: number; height: number }) => {
+    const keyboardTop = keyboardTopRef.current;
+    const fieldBottom = layout.y + layout.height;
+    const visibleBottom = keyboardTop - 24;
+
+    if (fieldBottom <= visibleBottom) {
+      return;
     }
-  };
+
+    const nextOffset = scrollViewY.current + (fieldBottom - visibleBottom) + 16;
+    scrollViewRef.current?.scrollTo({
+      y: Math.max(0, nextOffset),
+      animated: true,
+    });
+  }, []);
+
+  const scheduleScrollForFocusedField = useCallback((layout: { y: number; height: number }) => {
+    pendingFocusRef.current = layout;
+
+    if (keyboardScrollTimeoutRef.current) {
+      clearTimeout(keyboardScrollTimeoutRef.current);
+    }
+
+    keyboardScrollTimeoutRef.current = setTimeout(() => {
+      scrollFocusedFieldIntoView(layout);
+    }, 180);
+  }, [scrollFocusedFieldIntoView]);
+
+  const handleInputFocus = useCallback((layout: { y: number; height: number }) => {
+    if (keyboardVisibleRef.current) {
+      scheduleScrollForFocusedField(layout);
+    } else {
+      pendingFocusRef.current = layout;
+    }
+  }, [scheduleScrollForFocusedField]);
+
+  useEffect(() => {
+    const syncKeyboardFrame = (event: any) => {
+      keyboardVisibleRef.current = true;
+      keyboardTopRef.current = event.endCoordinates.screenY;
+
+      if (pendingFocusRef.current) {
+        if (keyboardSettledTimeoutRef.current) {
+          clearTimeout(keyboardSettledTimeoutRef.current);
+        }
+
+        keyboardSettledTimeoutRef.current = setTimeout(() => {
+          if (pendingFocusRef.current) {
+            scheduleScrollForFocusedField(pendingFocusRef.current);
+          }
+        }, 60);
+      }
+    };
+
+    const showSubscription = Keyboard.addListener('keyboardDidShow', syncKeyboardFrame);
+    const frameSubscriptions =
+      Platform.OS === 'ios'
+        ? [
+            Keyboard.addListener('keyboardWillChangeFrame', syncKeyboardFrame),
+            Keyboard.addListener('keyboardDidChangeFrame', syncKeyboardFrame),
+          ]
+        : [];
+
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      keyboardVisibleRef.current = false;
+      keyboardTopRef.current = Dimensions.get('window').height;
+
+      if (keyboardScrollTimeoutRef.current) {
+        clearTimeout(keyboardScrollTimeoutRef.current);
+        keyboardScrollTimeoutRef.current = null;
+      }
+      if (keyboardSettledTimeoutRef.current) {
+        clearTimeout(keyboardSettledTimeoutRef.current);
+        keyboardSettledTimeoutRef.current = null;
+      }
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+      frameSubscriptions.forEach((subscription) => subscription.remove());
+      if (keyboardScrollTimeoutRef.current) {
+        clearTimeout(keyboardScrollTimeoutRef.current);
+      }
+      if (keyboardSettledTimeoutRef.current) {
+        clearTimeout(keyboardSettledTimeoutRef.current);
+      }
+    };
+  }, [scheduleScrollForFocusedField]);
 
   const handleScroll = (event: any) => {
     scrollViewY.current = event.nativeEvent.contentOffset.y;
-  };
-
-  const fillRandomData = () => {
-    const randomId = Math.random().toString(36).substring(2, 10);
-    const firstNames = ['joao', 'maria', 'carlos', 'ana', 'pedro', 'julia', 'lucas', 'fernanda'];
-    const lastNames = ['silva', 'santos', 'oliveira', 'souza', 'lima', 'costa', 'ferreira'];
-    const randomFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-    const randomLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-    
-    setDisplayName(`${randomFirstName}${randomId.slice(0, 4)}`);
-    setFullName(`${randomFirstName.charAt(0).toUpperCase() + randomFirstName.slice(1)} ${randomLastName.charAt(0).toUpperCase() + randomLastName.slice(1)}`);
-    setEmail(`danilofsouza+${Date.now()}@gmail.com`);
-    setPhone(`5511${Math.floor(Math.random() * 900000000 + 100000000)}`);
-    setPassword('123456');
-    setConfirmPassword('123456');
   };
 
   const handleRegister = async () => {
@@ -124,16 +196,16 @@ export default function RegisterScreen() {
 
       // Criar usuário no Firebase
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      
+
       // Enviar email de verificação (a menos que EXPO_PUBLIC_SKIP_EMAIL_VERIFICATION esteja ativo)
       if (process.env.EXPO_PUBLIC_SKIP_EMAIL_VERIFICATION !== 'true') {
         // Salvar timestamp ANTES de enviar o email (pois o auth state change já aconteceu)
         await AsyncStorage.setItem('emailVerificationSentAt', Date.now().toString());
         await sendEmailVerification(userCredential.user);
       }
-      
+
       const normalizedDisplayName = displayName.trim().toLowerCase();
-      
+
       // Atualizar o perfil com o nome de exibição
       await updateProfile(userCredential.user, {
         displayName: normalizedDisplayName,
@@ -151,7 +223,7 @@ export default function RegisterScreen() {
       setShowSuccessDialog(true);
     } catch (error: any) {
       let errorMessage = 'Ocorreu um erro ao criar sua conta: ' + error.message;
-      
+
       switch (error.code) {
         case 'auth/email-already-in-use':
           errorMessage = 'Este email já está em uso.';
@@ -166,7 +238,7 @@ export default function RegisterScreen() {
           errorMessage = 'Operação não permitida.';
           break;
       }
-      
+
       show(errorMessage, { backgroundColor: '#ba1a1a' });
     } finally {
       setLoading(false);
@@ -176,9 +248,9 @@ export default function RegisterScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        keyboardVerticalOffset={0}
       >
         <ScrollView
           ref={scrollViewRef}
@@ -198,15 +270,14 @@ export default function RegisterScreen() {
               <Ionicons name="chevron-back" size={28} color="#000" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Criar conta</Text>
-            <TouchableOpacity onPress={fillRandomData}>
-              <Ionicons name="dice" size={24} color="#000" />
-            </TouchableOpacity>
+            <View style={styles.headerSpacer} />
           </View>
 
           {/* Form */}
           <View style={styles.form}>
             {/* Display Name Field */}
             <InputField
+              ref={displayNameRef}
               testID="displayname-input"
               label="Nome de exibição"
               value={displayName}
@@ -215,12 +286,16 @@ export default function RegisterScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               onFocusWithPosition={handleInputFocus}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => fullNameRef.current?.focus()}
               helperText="Apenas letras e números, sem espaços (3-20 caracteres)"
               maxLength={20}
             />
 
             {/* Full Name Field */}
             <InputField
+              ref={fullNameRef}
               testID="fullname-input"
               label="Nome completo"
               value={fullName}
@@ -229,11 +304,15 @@ export default function RegisterScreen() {
               autoCapitalize="words"
               autoCorrect={false}
               onFocusWithPosition={handleInputFocus}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => emailRef.current?.focus()}
               helperText="Privado, não será exibido publicamente"
             />
 
             {/* Email Field */}
             <InputField
+              ref={emailRef}
               testID="email-input"
               label="Email"
               value={email}
@@ -243,20 +322,29 @@ export default function RegisterScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               onFocusWithPosition={handleInputFocus}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => whatsappRef.current?.focus()}
             />
 
             {/* WhatsApp Field */}
             <WhatsappInput
+              ref={whatsappRef}
               testID="whatsapp-input"
               label="WhatsApp"
               value={phone}
               onChangeValue={setPhone}
               placeholder="Digite seu WhatsApp"
               isDark={false}
+              onFocusWithPosition={handleInputFocus}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => passwordRef.current?.focus()}
             />
 
             {/* Password Field */}
             <InputField
+              ref={passwordRef}
               testID="password-input"
               label="Senha"
               value={password}
@@ -264,10 +352,14 @@ export default function RegisterScreen() {
               placeholder="••••••••"
               secureTextEntry
               onFocusWithPosition={handleInputFocus}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => confirmPasswordRef.current?.focus()}
             />
 
             {/* Confirm Password Field */}
             <InputField
+              ref={confirmPasswordRef}
               testID="confirm-password-input"
               label="Confirmação de senha"
               value={confirmPassword}
@@ -275,6 +367,9 @@ export default function RegisterScreen() {
               placeholder="••••••••"
               secureTextEntry
               onFocusWithPosition={handleInputFocus}
+              returnKeyType="done"
+              blurOnSubmit
+              onSubmitEditing={handleRegister}
             />
 
             {/* Register Button */}
@@ -319,7 +414,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 40,
+    paddingBottom: 96,
   },
   header: {
     flexDirection: 'row',

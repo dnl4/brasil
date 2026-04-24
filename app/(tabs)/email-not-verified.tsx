@@ -85,7 +85,7 @@ export default function EmailNotVerifiedScreen() {
       } else {
         show('Email ainda não verificado.', { backgroundColor: '#f59e0b' });
       }
-    } catch (error) {
+    } catch {
       show('Erro ao verificar status.', { backgroundColor: '#ba1a1a' });
     } finally {
       setVerifying(false);
@@ -94,7 +94,6 @@ export default function EmailNotVerifiedScreen() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    router.replace('/auth/login');
   };
 
   return (

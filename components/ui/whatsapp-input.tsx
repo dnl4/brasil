@@ -1,12 +1,13 @@
 import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
-import React, { useState } from 'react';
+import React, { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
 import {
     Modal,
     ScrollView,
     StyleSheet,
     Text,
     TextInput,
+    TextInputProps as RNTextInputProps,
     TouchableOpacity,
     View,
 } from 'react-native';
@@ -22,9 +23,17 @@ interface WhatsappInputProps {
   error?: string;
   isDark?: boolean;
   testID?: string;
+  onFocusWithPosition?: (layout: { y: number; height: number }) => void;
+  returnKeyType?: RNTextInputProps['returnKeyType'];
+  blurOnSubmit?: RNTextInputProps['blurOnSubmit'];
+  onSubmitEditing?: RNTextInputProps['onSubmitEditing'];
 }
 
-export function WhatsappInput({
+export interface WhatsappInputRef {
+  focus: () => void;
+}
+
+export const WhatsappInput = forwardRef<WhatsappInputRef, WhatsappInputProps>(({
   value,
   onChangeValue,
   label = 'WhatsApp',
@@ -33,11 +42,17 @@ export function WhatsappInput({
   error,
   isDark = false,
   testID,
-}: WhatsappInputProps) {
+  onFocusWithPosition,
+  returnKeyType,
+  blurOnSubmit,
+  onSubmitEditing,
+}, ref) => {
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<Country>(getDefaultCountry());
   const [localValue, setLocalValue] = useState('');
   const [countryFilter, setCountryFilter] = useState('');
+  const containerRef = useRef<View>(null);
+  const inputRef = useRef<TextInput>(null);
 
   // Inicializa o valor local baseado no value prop
   React.useEffect(() => {
@@ -138,8 +153,23 @@ export function WhatsappInput({
 
   const effectivePlaceholder = placeholder || selectedCountry.placeholder;
 
+  const handleInputFocus = useCallback(() => {
+    if (!onFocusWithPosition) {
+      return;
+    }
+
+    containerRef.current?.measureInWindow((...measure) => {
+      const [, y, , height] = measure;
+      onFocusWithPosition({ y, height });
+    });
+  }, [onFocusWithPosition]);
+
+  useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current?.focus(),
+  }));
+
   return (
-    <View style={styles.container}>
+    <View ref={containerRef} style={styles.container}>
       {label && <Text style={[styles.label, isDark && styles.labelDark]}>{label}</Text>}
       
       <View style={[
@@ -165,6 +195,7 @@ export function WhatsappInput({
 
         {/* Input do número */}
         <TextInput
+          ref={inputRef}
           testID={testID}
           style={[styles.input, isDark && styles.inputDark]}
           value={localValue}
@@ -173,6 +204,10 @@ export function WhatsappInput({
           placeholderTextColor={isDark ? '#666' : '#9CA3AF'}
           keyboardType="phone-pad"
           editable={!readonly}
+          onFocus={handleInputFocus}
+          returnKeyType={returnKeyType}
+          blurOnSubmit={blurOnSubmit}
+          onSubmitEditing={onSubmitEditing}
         />
       </View>
 
@@ -183,6 +218,8 @@ export function WhatsappInput({
         visible={showCountryPicker}
         transparent
         animationType="fade"
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
         onRequestClose={() => {
           setShowCountryPicker(false);
           setCountryFilter('');
@@ -239,7 +276,9 @@ export function WhatsappInput({
       </Modal>
     </View>
   );
-}
+});
+
+WhatsappInput.displayName = 'WhatsappInput';
 
 const styles = StyleSheet.create({
   container: {

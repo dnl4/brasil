@@ -4,9 +4,11 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Keyboard,
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,8 +39,12 @@ export default function HomeScreen() {
   const [ratingsModalVisible, setRatingsModalVisible] = useState(false);
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [selectedRatingForReport, setSelectedRatingForReport] = useState<Rating | null>(null);
+  const [pendingDeleteRating, setPendingDeleteRating] = useState<Rating | null>(null);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
 
   const handleSearch = async () => {
+    Keyboard.dismiss();
+
     if (!searchWhatsapp || searchWhatsapp.length < 10) {
       show('Digite um número de WhatsApp válido.', { backgroundColor: '#ba1a1a' });
       return;
@@ -77,21 +83,27 @@ export default function HomeScreen() {
     });
   };
 
+  const handleDeletePress = (rating: Rating) => {
+    setPendingDeleteRating(rating);
+    setDeleteConfirmVisible(true);
+  };
+
   const handleDeleteRating = async (rating: Rating) => {
     try {
       await deleteRating(rating.id);
       show('Avaliação excluída com sucesso!', { backgroundColor: '#006e1c' });
       
-      // Atualiza a lista
-      if (searchResults) {
-        const updatedResults = searchResults.filter((r) => r.id !== rating.id);
-        setSearchResults(updatedResults);
-        
-        // Fecha o modal se não houver mais avaliações
+      setSearchResults((currentResults) => {
+        if (!currentResults) return currentResults;
+
+        const updatedResults = currentResults.filter((r) => r.id !== rating.id);
+
         if (updatedResults.length === 0) {
           setRatingsModalVisible(false);
         }
-      }
+
+        return updatedResults;
+      });
     } catch (error) {
       console.error('Erro ao excluir avaliação:', error);
       show('Erro ao excluir avaliação. Tente novamente.', { backgroundColor: '#ba1a1a' });
@@ -172,10 +184,11 @@ export default function HomeScreen() {
   };
 
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Buscar Prestador</Text>
+        <Text style={styles.headerTitle}>Consultar Avaliações de Prestador</Text>
         <Text style={styles.headerSubtitle}>
           Encontre avaliações por número de WhatsApp
         </Text>
@@ -233,7 +246,19 @@ export default function HomeScreen() {
           onClose={() => setRatingsModalVisible(false)}
           onEdit={handleEditRating}
           onDelete={handleDeleteRating}
+          onDeletePress={handleDeletePress}
           onReport={handleReportRating}
+          deleteConfirmVisible={deleteConfirmVisible}
+          pendingDeleteRating={pendingDeleteRating}
+          onDeleteConfirm={(rating) => {
+            handleDeleteRating(rating);
+            setDeleteConfirmVisible(false);
+            setPendingDeleteRating(null);
+          }}
+          onDeleteCancel={() => {
+            setDeleteConfirmVisible(false);
+            setPendingDeleteRating(null);
+          }}
         />
       )}
 
@@ -256,6 +281,7 @@ export default function HomeScreen() {
         />
       )}
     </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
 
