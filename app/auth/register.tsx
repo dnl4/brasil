@@ -16,10 +16,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CustomDialog } from '../../components/ui/custom-dialog';
-import { InputField } from '../../components/ui/input-field';
+import { InputField, type InputFieldRef } from '../../components/ui/input-field';
 import { PrimaryButton } from '../../components/ui/primary-button';
 import { useSnackbar } from '../../components/ui/snackbar';
-import { WhatsappInput } from '../../components/ui/whatsapp-input';
+import { WhatsappInput, type WhatsappInputRef } from '../../components/ui/whatsapp-input';
 import { auth } from '../../firebaseConfig';
 import { isDisplayNameAvailable, isPhoneNumberAvailable, updateUserProfile, validateDisplayNameFormat } from '../../services/user-service';
 
@@ -36,6 +36,12 @@ export default function RegisterScreen() {
 
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollViewY = useRef(0);
+  const displayNameRef = useRef<InputFieldRef>(null);
+  const fullNameRef = useRef<InputFieldRef>(null);
+  const emailRef = useRef<InputFieldRef>(null);
+  const whatsappRef = useRef<WhatsappInputRef>(null);
+  const passwordRef = useRef<InputFieldRef>(null);
+  const confirmPasswordRef = useRef<InputFieldRef>(null);
   const keyboardTopRef = useRef(Dimensions.get('window').height);
   const keyboardVisibleRef = useRef(false);
   const keyboardScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -265,6 +271,7 @@ export default function RegisterScreen() {
           <View style={styles.form}>
             {/* Display Name Field */}
             <InputField
+              ref={displayNameRef}
               testID="displayname-input"
               label="Nome de exibição"
               value={displayName}
@@ -273,12 +280,16 @@ export default function RegisterScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               onFocusWithPosition={handleInputFocus}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => fullNameRef.current?.focus()}
               helperText="Apenas letras e números, sem espaços (3-20 caracteres)"
               maxLength={20}
             />
 
             {/* Full Name Field */}
             <InputField
+              ref={fullNameRef}
               testID="fullname-input"
               label="Nome completo"
               value={fullName}
@@ -287,11 +298,15 @@ export default function RegisterScreen() {
               autoCapitalize="words"
               autoCorrect={false}
               onFocusWithPosition={handleInputFocus}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => emailRef.current?.focus()}
               helperText="Privado, não será exibido publicamente"
             />
 
             {/* Email Field */}
             <InputField
+              ref={emailRef}
               testID="email-input"
               label="Email"
               value={email}
@@ -301,10 +316,14 @@ export default function RegisterScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               onFocusWithPosition={handleInputFocus}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => whatsappRef.current?.focus()}
             />
 
             {/* WhatsApp Field */}
             <WhatsappInput
+              ref={whatsappRef}
               testID="whatsapp-input"
               label="WhatsApp"
               value={phone}
@@ -312,10 +331,14 @@ export default function RegisterScreen() {
               placeholder="Digite seu WhatsApp"
               isDark={false}
               onFocusWithPosition={handleInputFocus}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => passwordRef.current?.focus()}
             />
 
             {/* Password Field */}
             <InputField
+              ref={passwordRef}
               testID="password-input"
               label="Senha"
               value={password}
@@ -323,10 +346,14 @@ export default function RegisterScreen() {
               placeholder="••••••••"
               secureTextEntry
               onFocusWithPosition={handleInputFocus}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => confirmPasswordRef.current?.focus()}
             />
 
             {/* Confirm Password Field */}
             <InputField
+              ref={confirmPasswordRef}
               testID="confirm-password-input"
               label="Confirmação de senha"
               value={confirmPassword}
@@ -334,6 +361,9 @@ export default function RegisterScreen() {
               placeholder="••••••••"
               secureTextEntry
               onFocusWithPosition={handleInputFocus}
+              returnKeyType="done"
+              blurOnSubmit
+              onSubmitEditing={handleRegister}
             />
 
             {/* Register Button */}

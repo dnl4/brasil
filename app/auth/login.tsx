@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CustomDialog } from '../../components/ui/custom-dialog';
-import { InputField } from '../../components/ui/input-field';
+import { InputField, type InputFieldRef } from '../../components/ui/input-field';
 import { PrimaryButton } from '../../components/ui/primary-button';
 import { useSnackbar } from '../../components/ui/snackbar';
 import { useAuth } from '../../contexts/auth-context';
@@ -33,6 +33,8 @@ export default function LoginScreen() {
 
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollViewY = useRef(0);
+  const emailRef = useRef<InputFieldRef>(null);
+  const passwordRef = useRef<InputFieldRef>(null);
   const keyboardTopRef = useRef(Dimensions.get('window').height);
   const keyboardVisibleRef = useRef(false);
   const keyboardScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -209,6 +211,7 @@ export default function LoginScreen() {
           <View style={styles.form}>
             {/* Email Field */}
             <InputField
+              ref={emailRef}
               testID="email-input"
               label="Email"
               value={email}
@@ -220,10 +223,14 @@ export default function LoginScreen() {
               textContentType="none"
               importantForAutofill="no"
               onFocusWithPosition={handleInputFocus}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => passwordRef.current?.focus()}
             />
 
             {/* Password Field */}
             <InputField
+              ref={passwordRef}
               testID="password-input"
               label="Senha"
               value={password}
@@ -233,6 +240,9 @@ export default function LoginScreen() {
               textContentType="none"
               importantForAutofill="no"
               onFocusWithPosition={handleInputFocus}
+              returnKeyType="done"
+              blurOnSubmit
+              onSubmitEditing={handleLogin}
             />
 
             {/* Login Button */}
