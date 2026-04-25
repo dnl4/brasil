@@ -31,7 +31,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/firebaseConfig';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getUserProfile, isDisplayNameAvailable, updateUserProfile, validateDisplayNameFormat } from '@/services/user-service';
-import { generateVerificationCode, sendVerificationCode, storeVerificationCode, verifyCode } from '@/services/whatsapp-service';
+import { sendVerificationCodeForUser, verifyStoredCode } from '@/services/whatsapp-service';
 
 export default function ContactSettingsScreen() {
   const { user } = useAuth();
@@ -239,10 +239,12 @@ export default function ContactSettingsScreen() {
     if (!phone.trim()) return;
 
     try {
-      const code = generateVerificationCode();
-      storeVerificationCode(phone, code);
-      
-      await sendVerificationCode(phone, code);
+      const userId = auth.currentUser?.uid;
+      if (!userId) {
+        return;
+      }
+
+      await sendVerificationCodeForUser(userId, phone.trim());
       
       setShowVerificationDialog(true);
       snackbar.show('Código enviado via WhatsApp!', { backgroundColor: '#4CAF50' });
@@ -258,7 +260,12 @@ export default function ContactSettingsScreen() {
       return;
     }
 
-    const isValid = verifyCode(phone, inputCode.trim());
+    const userId = auth.currentUser?.uid;
+    if (!userId) {
+      return;
+    }
+
+    const isValid = await verifyStoredCode(userId, inputCode.trim());
     
     if (!isValid) {
       snackbar.show('Código inválido ou expirado', { backgroundColor: '#F44336' });

@@ -4,10 +4,10 @@ import { useSnackbar } from '@/components/ui/snackbar';
 import { auth } from '@/firebaseConfig';
 import { getUserProfile, updateUserProfile } from '@/services/user-service';
 import {
-  generateVerificationCode,
-  sendVerificationCode,
-  storeVerificationCode,
-  verifyCode,
+  getReusableVerificationCode,
+  sendVerificationCodeForUser,
+  shouldRevealVerificationCode,
+  verifyStoredCode,
 } from '@/services/whatsapp-service';
 import { Ionicons } from '@expo/vector-icons';
 import { signOut } from 'firebase/auth';
@@ -28,6 +28,7 @@ export default function WhatsAppNotVerifiedScreen() {
   const [verifying, setVerifying] = useState(false);
   const [sending, setSending] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [verificationCode, setVerificationCode] = useState('');
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const { show } = useSnackbar();
@@ -35,7 +36,6 @@ export default function WhatsAppNotVerifiedScreen() {
   const code = digits.join('');
 
   const handleDigitChange = (text: string, index: number) => {
-    // Handle paste of full code
     if (text.length > 1) {
       const pastedCode = text.replace(/[^0-9]/g, '').slice(0, 6);
       if (pastedCode.length === 6) {
@@ -55,7 +55,10 @@ export default function WhatsAppNotVerifiedScreen() {
     }
   };
 
-  const handleKeyPress = (e: NativeSyntheticEvent<TextInputKeyPressEventData>, index: number) => {
+  const handleKeyPress = (
+    e: NativeSyntheticEvent<TextInputKeyPressEventData>,
+    index: number
+  ) => {
     if (e.nativeEvent.key === 'Backspace' && !digits[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
@@ -68,6 +71,22 @@ export default function WhatsAppNotVerifiedScreen() {
     }
   }, [countdown]);
 
+  useEffect(() => {
+    const loadSavedCode = async () => {
+      const userId = auth.currentUser?.uid;
+      if (!userId) {
+        return;
+      }
+
+      const savedCode = await getReusableVerificationCode(userId);
+      if (savedCode) {
+        setVerificationCode(savedCode);
+      }
+    };
+
+    void loadSavedCode();
+  }, []);
+
   const handleSendCode = async () => {
     if (countdown > 0) return;
 
@@ -78,19 +97,17 @@ export default function WhatsAppNotVerifiedScreen() {
     try {
       const userProfile = await getUserProfile(userId);
       if (!userProfile?.phoneNumber) {
-        show('Número de WhatsApp não cadastrado.', { backgroundColor: '#ba1a1a' });
+        show('Numero de WhatsApp nao cadastrado.', { backgroundColor: '#ba1a1a' });
         return;
       }
 
-      const code = generateVerificationCode();
-      console.log('Código gerado:', code);
-      storeVerificationCode(userProfile.phoneNumber, code);
-      await sendVerificationCode(userProfile.phoneNumber, code);
+      const code = await sendVerificationCodeForUser(userId, userProfile.phoneNumber);
+      setVerificationCode(code);
 
-      show('Código enviado para seu WhatsApp!', { backgroundColor: '#22c55e' });
+      show('Codigo enviado para seu WhatsApp!', { backgroundColor: '#22c55e' });
       setCountdown(60);
     } catch {
-      show('Erro ao enviar código.', { backgroundColor: '#ba1a1a' });
+      show('Erro ao enviar codigo.', { backgroundColor: '#ba1a1a' });
     } finally {
       setSending(false);
     }
@@ -104,19 +121,19 @@ export default function WhatsAppNotVerifiedScreen() {
     try {
       const userProfile = await getUserProfile(userId);
       if (!userProfile?.phoneNumber) {
-        show('Número de WhatsApp não cadastrado.', { backgroundColor: '#ba1a1a' });
+        show('Numero de WhatsApp nao cadastrado.', { backgroundColor: '#ba1a1a' });
         return;
       }
 
-      const isValid = verifyCode(userProfile.phoneNumber, code);
+      const isValid = await verifyStoredCode(userId, code);
       if (!isValid) {
-        show('Código inválido ou expirado.', { backgroundColor: '#ba1a1a' });
+        show('Codigo invalido ou expirado.', { backgroundColor: '#ba1a1a' });
         return;
       }
 
       setShowSuccessDialog(true);
     } catch {
-      show('Erro ao verificar código.', { backgroundColor: '#ba1a1a' });
+      show('Erro ao verificar codigo.', { backgroundColor: '#ba1a1a' });
     } finally {
       setVerifying(false);
     }
@@ -148,14 +165,23 @@ export default function WhatsAppNotVerifiedScreen() {
 
         <Text style={styles.title}>Verifique seu WhatsApp</Text>
         <Text style={styles.subtitle}>
-          Enviaremos um código de verificação para o número de WhatsApp cadastrado.
+          Enviaremos um codigo de verificacao para o numero de WhatsApp cadastrado.
         </Text>
+
+        {shouldRevealVerificationCode() && verificationCode ? (
+          <View style={styles.codeRevealContainer}>
+            <Text style={styles.codeRevealLabel}>Codigo gerado</Text>
+            <Text style={styles.codeRevealValue}>{verificationCode}</Text>
+          </View>
+        ) : null}
 
         <View style={styles.codeContainer}>
           {digits.map((digit, index) => (
             <TextInput
               key={index}
-              ref={(ref) => { inputRefs.current[index] = ref; }}
+              ref={(ref) => {
+                inputRefs.current[index] = ref;
+              }}
               style={styles.codeInput}
               placeholder="0"
               placeholderTextColor="#9CA3AF"
@@ -171,7 +197,7 @@ export default function WhatsAppNotVerifiedScreen() {
         </View>
 
         <PrimaryButton
-          title="Verificar código"
+          title="Verificar codigo"
           onPress={handleVerify}
           loading={verifying}
           disabled={code.length < 6}
@@ -184,22 +210,19 @@ export default function WhatsAppNotVerifiedScreen() {
           disabled={sending || countdown > 0}
         >
           <Text style={[styles.resendText, countdown > 0 && styles.textDisabled]}>
-            {countdown > 0 ? `Reenviar código em ${countdown}s` : 'Reenviar código'}
+            {countdown > 0 ? `Reenviar codigo em ${countdown}s` : 'Reenviar codigo'}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.linkContainer}
-          onPress={handleLogout}
-        >
+        <TouchableOpacity style={styles.linkContainer} onPress={handleLogout}>
           <Text style={styles.linkText}>Sair da conta</Text>
         </TouchableOpacity>
       </View>
 
       <CustomDialog
         visible={showSuccessDialog}
-        title="Verificação concluída!"
-        message="Obrigado por concluir a verificação."
+        title="Verificacao concluida!"
+        message="Obrigado por concluir a verificacao."
         buttons={[{ text: 'OK' }]}
         onClose={async () => {
           const userId = auth.currentUser?.uid;
@@ -284,6 +307,31 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     lineHeight: 24,
   },
+  codeRevealContainer: {
+    width: '100%',
+    borderRadius: 12,
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.35)',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  codeRevealLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#B45309',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 4,
+  },
+  codeRevealValue: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#F59E0B',
+    letterSpacing: 4,
+  },
   codeContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -310,11 +358,6 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     fontWeight: '500',
   },
-  backText: {
-    fontSize: 16,
-    color: '#0066FF',
-    fontWeight: '500',
-  },
   resendText: {
     fontSize: 16,
     color: '#0066FF',
@@ -324,4 +367,3 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
 });
-

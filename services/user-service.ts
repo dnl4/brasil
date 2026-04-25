@@ -7,6 +7,8 @@ export interface UserProfile {
   fullName: string; 
   phoneNumber?: string;
   phoneNumberVerified?: boolean;
+  whatsappVerificationCode?: string;
+  whatsappVerificationCodeExpiresAt?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }

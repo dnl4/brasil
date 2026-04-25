@@ -1,5 +1,11 @@
+import { db } from '@/firebaseConfig';
+import { deleteField, doc, getDoc, setDoc } from 'firebase/firestore';
+
 const WHATSAPP_API_VERSION = 'v24.0';
 const WHATSAPP_API_URL = `https://graph.facebook.com/${WHATSAPP_API_VERSION}`;
+const USERS_COLLECTION = 'users';
+const VERIFICATION_CODE_TTL_MS = 5 * 60 * 1000;
+const WHATSAPP_CODE_REVEAL_DEADLINE = new Date(2026, 4, 10);
 
 const ACCESS_TOKEN = process.env.EXPO_PUBLIC_WHATSAPP_ACCESS_TOKEN!;
 const PHONE_NUMBER_ID = process.env.EXPO_PUBLIC_WHATSAPP_PHONE_NUMBER_ID!;
@@ -14,6 +20,11 @@ interface TemplateComponent {
   index?: string;
 }
 
+export interface StoredVerificationCode {
+  code: string;
+  expiresAt: number;
+}
+
 export async function sendTemplateMessage(
   to: string,
   templateName: string,
@@ -26,7 +37,7 @@ export async function sendTemplateMessage(
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${ACCESS_TOKEN}`,
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -62,7 +73,7 @@ export async function markMessageAsRead(messageId: string) {
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${ACCESS_TOKEN}`,
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -87,7 +98,7 @@ export async function getBusinessProfile() {
       {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${ACCESS_TOKEN}`,
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
         },
       }
     );
@@ -116,65 +127,126 @@ export function handleWebhook(payload: any) {
   }
 }
 
-// Gera código de verificação aleatório de 6 dígitos
+// Gera codigo de verificacao aleatorio de 6 digitos
 export function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Envia código de verificação via WhatsApp usando template 'verify_code'
-// IMPORTANTE: Template deve estar previamente criado no Meta Business Manager
-export async function sendVerificationCode(phoneNumber: string, code: string) {
-  return sendTemplateMessage(
-    phoneNumber,
-    'verify_code',
-    'en',
-    [
-      {
-        type: 'body',
-        parameters: [
-          {
-            type: 'text',
-            text: code,
-          },
-        ],
-      },
-      {
-        type: 'button',
-        sub_type: 'url',
-        index: '0',
-        parameters: [
-          {
-            type: 'text',
-            text: code,
-          },
-        ],
-      },
-    ]
+export function shouldRevealVerificationCode(now: Date = new Date()): boolean {
+  return now < WHATSAPP_CODE_REVEAL_DEADLINE;
+}
+
+async function readStoredVerificationCode(userId: string): Promise<StoredVerificationCode | null> {
+  const docRef = doc(db, USERS_COLLECTION, userId);
+  const snapshot = await getDoc(docRef);
+
+  if (!snapshot.exists()) {
+    return null;
+  }
+
+  const data = snapshot.data();
+  const code = data.whatsappVerificationCode;
+  const expiresAt = data.whatsappVerificationCodeExpiresAt;
+
+  if (typeof code !== 'string' || !code) {
+    return null;
+  }
+
+  if (typeof expiresAt !== 'number' || Date.now() > expiresAt) {
+    await clearVerificationCode(userId);
+    return null;
+  }
+
+  return { code, expiresAt };
+}
+
+export async function saveVerificationCode(
+  userId: string,
+  code: string,
+  expiresAt: number = Date.now() + VERIFICATION_CODE_TTL_MS
+): Promise<StoredVerificationCode> {
+  await setDoc(
+    doc(db, USERS_COLLECTION, userId),
+    {
+      whatsappVerificationCode: code,
+      whatsappVerificationCodeExpiresAt: expiresAt,
+      updatedAt: new Date(),
+    },
+    { merge: true }
+  );
+
+  return { code, expiresAt };
+}
+
+export async function clearVerificationCode(userId: string): Promise<void> {
+  await setDoc(
+    doc(db, USERS_COLLECTION, userId),
+    {
+      whatsappVerificationCode: deleteField(),
+      whatsappVerificationCodeExpiresAt: deleteField(),
+      updatedAt: new Date(),
+    },
+    { merge: true }
   );
 }
 
-// Armazena códigos de verificação temporariamente (em produção use Redis ou Firestore)
-const verificationCodes = new Map<string, { code: string; expiresAt: number }>();
-
-export function storeVerificationCode(phoneNumber: string, code: string) {
-  const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutos
-  verificationCodes.set(phoneNumber, { code, expiresAt });
+export async function getReusableVerificationCode(userId: string): Promise<string | null> {
+  const stored = await readStoredVerificationCode(userId);
+  return stored?.code ?? null;
 }
 
-export function verifyCode(phoneNumber: string, inputCode: string): boolean {
-  const stored = verificationCodes.get(phoneNumber);
-  
-  if (!stored) return false;
-  
-  if (Date.now() > stored.expiresAt) {
-    verificationCodes.delete(phoneNumber);
+export async function getOrCreateVerificationCode(userId: string): Promise<StoredVerificationCode> {
+  const stored = await readStoredVerificationCode(userId);
+  if (stored) {
+    return stored;
+  }
+
+  const code = generateVerificationCode();
+  return saveVerificationCode(userId, code);
+}
+
+export async function sendVerificationCode(phoneNumber: string, code: string) {
+  return sendTemplateMessage(phoneNumber, 'verify_code', 'en', [
+    {
+      type: 'body',
+      parameters: [
+        {
+          type: 'text',
+          text: code,
+        },
+      ],
+    },
+    {
+      type: 'button',
+      sub_type: 'url',
+      index: '0',
+      parameters: [
+        {
+          type: 'text',
+          text: code,
+        },
+      ],
+    },
+  ]);
+}
+
+export async function sendVerificationCodeForUser(userId: string, phoneNumber: string) {
+  const { code } = await getOrCreateVerificationCode(userId);
+  await sendVerificationCode(phoneNumber, code);
+  return code;
+}
+
+export async function verifyStoredCode(userId: string, inputCode: string): Promise<boolean> {
+  const stored = await readStoredVerificationCode(userId);
+
+  if (!stored) {
     return false;
   }
-  
-  if (stored.code === inputCode) {
-    verificationCodes.delete(phoneNumber);
-    return true;
+
+  if (stored.code !== inputCode.trim()) {
+    return false;
   }
-  
-  return false;
+
+  await clearVerificationCode(userId);
+  return true;
 }
