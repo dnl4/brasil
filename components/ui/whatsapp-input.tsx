@@ -53,6 +53,9 @@ export const WhatsappInput = forwardRef<WhatsappInputRef, WhatsappInputProps>(({
   const [countryFilter, setCountryFilter] = useState('');
   const containerRef = useRef<View>(null);
   const inputRef = useRef<TextInput>(null);
+  const lastDigitsRef = useRef('');
+  const lastFormattedRef = useRef('');
+  const backspacePressedRef = useRef(false);
 
   // Inicializa o valor local baseado no value prop
   React.useEffect(() => {
@@ -65,12 +68,19 @@ export const WhatsappInput = forwardRef<WhatsappInputRef, WhatsappInputProps>(({
       if (detectedCountry) {
         const dialDigits = detectedCountry.dialCode.replace(/\D/g, '');
         setSelectedCountry(detectedCountry);
-        setLocalValue(formatPhoneNumber(digits.slice(dialDigits.length), detectedCountry));
+        const formatted = formatPhoneNumber(digits.slice(dialDigits.length), detectedCountry);
+        setLocalValue(formatted);
+        lastDigitsRef.current = digits.slice(dialDigits.length);
+        lastFormattedRef.current = formatted;
       } else {
         setLocalValue(digits);
+        lastDigitsRef.current = digits;
+        lastFormattedRef.current = digits;
       }
     } else {
       setLocalValue('');
+      lastDigitsRef.current = '';
+      lastFormattedRef.current = '';
     }
   }, [value]);
 
@@ -110,24 +120,46 @@ export const WhatsappInput = forwardRef<WhatsappInputRef, WhatsappInputProps>(({
 
   const handleTextChange = (text: string) => {
     if (readonly) return;
-    
-    // Remove tudo que não é dígito
+
     const digits = text.replace(/\D/g, '');
+    let nextDigits = digits;
+
+    // Quando o usuário apaga um caractere de máscara, o valor sanitizado pode
+    // continuar igual ao anterior. Nesse caso, consumimos um dígito para que o
+    // backspace "ande" corretamente.
+    if (
+      backspacePressedRef.current &&
+      digits === lastDigitsRef.current &&
+      text.length < lastFormattedRef.current.length &&
+      lastDigitsRef.current.length > 0
+    ) {
+      nextDigits = lastDigitsRef.current.slice(0, -1);
+    }
+
+    backspacePressedRef.current = false;
     
     // Limita o tamanho baseado no país
     let maxLength = 15; // default
     if (selectedCountry.code === 'BR') maxLength = 11;
     else if (selectedCountry.code === 'PY') maxLength = 9;
     
-    const limitedDigits = digits.slice(0, maxLength);
+    const limitedDigits = nextDigits.slice(0, maxLength);
     
     // Formata para exibição
     const formatted = formatPhoneNumber(limitedDigits, selectedCountry);
     setLocalValue(formatted);
+    lastDigitsRef.current = limitedDigits;
+    lastFormattedRef.current = formatted;
     
     // Envia o número completo (código do país + número)
     const dialDigits = selectedCountry.dialCode.replace(/\D/g, '');
     onChangeValue(limitedDigits ? `${dialDigits}${limitedDigits}` : '');
+  };
+
+  const handleKeyPress = (key: string) => {
+    if (key === 'Backspace') {
+      backspacePressedRef.current = true;
+    }
   };
 
   const handleCountrySelect = (country: Country) => {
@@ -205,6 +237,7 @@ export const WhatsappInput = forwardRef<WhatsappInputRef, WhatsappInputProps>(({
           keyboardType="phone-pad"
           editable={!readonly}
           onFocus={handleInputFocus}
+          onKeyPress={(e) => handleKeyPress(e.nativeEvent.key)}
           returnKeyType={returnKeyType}
           blurOnSubmit={blurOnSubmit}
           onSubmitEditing={onSubmitEditing}
