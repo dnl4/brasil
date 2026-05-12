@@ -119,6 +119,9 @@ export default function DocumentosScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Documentos</Text>
+        <Text style={styles.headerDescription}>
+          Consulte os documentos necessarios para se mudar para o Paraguai e marque os que voce ja possui.
+        </Text>
       </View>
 
       
@@ -189,6 +192,12 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: '#111827',
+  },
+  headerDescription: {
+    fontSize: 15,
+    color: '#6B7280',
+    lineHeight: 22,
+    marginTop: 8,
   },
   scrollView: {
     flex: 1,

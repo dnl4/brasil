@@ -1,9 +1,10 @@
-import { FileAttachmentIcon, MessageSearch01Icon, StarIcon, UserIcon, UserSearch01Icon } from '@hugeicons/core-free-icons';
+import { FileAttachmentIcon, StarIcon, UserIcon, UserSearch01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
+import { shouldSkipWhatsappVerification } from '@/constants/verification';
 import { useAuth } from '@/contexts/auth-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EmailNotVerifiedScreen from './email-not-verified';
@@ -23,11 +24,12 @@ export default function TabLayout() {
   if (!user?.emailVerified && process.env.EXPO_PUBLIC_SKIP_EMAIL_VERIFICATION !== 'true') {
     return <EmailNotVerifiedScreen />;
   }
-  if (!user?.phoneNumberVerified && process.env.EXPO_PUBLIC_SKIP_WHATSAPP_VERIFICATION !== 'true') {
+  if (!user?.phoneNumberVerified && !shouldSkipWhatsappVerification()) {
     return <WhatsappNotVerifiedScreen />;
   }
   return (
     <Tabs
+      initialRouteName="services"
       screenOptions={{
         tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: inactiveColor,
@@ -58,8 +60,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color }) => <HugeiconsIcon icon={MessageSearch01Icon} size={24} color={color} />,
+          href: null,
         }}
       />
       <Tabs.Screen

@@ -82,10 +82,10 @@ export default function ServicesScreen() {
     try {
       const results = await getRatingsByService(searchService.trim());
       
-      // Encontra WhatsApps únicos
+      // Encontra telefones únicos
       const uniqueWhatsapps = [...new Set(results.map(r => r.prestadorWhatsapp))];
       
-      // Para cada WhatsApp, busca TODAS as avaliações
+      // Para cada telefone, busca TODAS as avaliações
       const providersList: ProviderInfo[] = [];
       
       for (const whatsapp of uniqueWhatsapps) {
@@ -115,7 +115,7 @@ export default function ServicesScreen() {
 
   const handleProviderPress = async (provider: ProviderInfo) => {
     try {
-      // Busca TODAS as avaliações deste WhatsApp
+      // Busca TODAS as avaliações deste telefone
       const allRatings = await getRatingsByWhatsapp(provider.prestadorWhatsapp);
       
       // Atualiza o provider com todas as avaliações
@@ -139,6 +139,10 @@ export default function ServicesScreen() {
       pathname: '/rating/[id]',
       params: { id: rating.id },
     });
+  };
+
+  const handleNewRating = () => {
+    router.push('/rating/new');
   };
 
   const handleDeletePress = (rating: Rating) => {
@@ -254,7 +258,7 @@ export default function ServicesScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Buscar por Serviço</Text>
         <Text style={styles.headerSubtitle}>
-          Encontre prestadores por tipo de serviço
+          Selecione um serviço para encontrar prestadores avaliados pela comunidade
         </Text>
       </View>
 
@@ -361,6 +365,10 @@ export default function ServicesScreen() {
           }}
         />
       )}
+
+      <TouchableOpacity style={styles.fab} onPress={handleNewRating} activeOpacity={0.85}>
+        <Text style={styles.fabText}>+ Avaliar</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -436,7 +444,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: 24,
+    paddingBottom: 100,
     flexGrow: 1,
   },
   providerCard: {
@@ -501,6 +509,25 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 8,
     textAlign: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    right: 24,
+    bottom: 24,
+    backgroundColor: '#1C1C1E',
+    borderRadius: 28,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  fabText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
