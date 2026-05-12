@@ -129,6 +129,7 @@ export default function DocumentosScreen() {
         {DOCUMENTS.map((item, index) => (
           <View key={item.id} style={styles.timelineItemContainer}>
             <View style={styles.timelineLeft}>
+              {index < DOCUMENTS.length - 1 && <View style={styles.connector} />}
               <TouchableOpacity 
                 onPress={() => toggleItem(item.id)}
                 style={[
@@ -138,9 +139,6 @@ export default function DocumentosScreen() {
               >
                 {completedItems[item.id] && <Text style={styles.checkmark}>✓</Text>}
               </TouchableOpacity>
-              {index < DOCUMENTS.length - 1 && (
-                <View style={styles.connector} />
-              )}
             </View>
             
             <TouchableOpacity 
@@ -208,11 +206,13 @@ const styles = StyleSheet.create({
   },
   timelineItemContainer: {
     flexDirection: 'row',
-    marginBottom: 0,
+    marginBottom: 18,
   },
   timelineLeft: {
     alignItems: 'center',
     marginRight: 16,
+    position: 'relative',
+    width: 28,
   },
   checkbox: {
     width: 28,
@@ -234,10 +234,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   connector: {
+    position: 'absolute',
+    top: 14,
+    bottom: -18,
     width: 2,
-    flex: 1,
     backgroundColor: '#E5E7EB',
-    minHeight: 40,
   },
   timelineRight: {
     flex: 1,
