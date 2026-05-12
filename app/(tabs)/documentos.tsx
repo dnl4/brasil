@@ -42,14 +42,18 @@ const DOCUMENTS: DocumentInfo[] = [
   },
 ];
 
+const getFirstIncompleteDocumentId = (completedItems: Record<string, boolean>) => {
+  return DOCUMENTS.find((document) => !completedItems[document.id])?.id ?? null;
+};
+
 export default function DocumentosScreen() {
   const { user } = useAuth();
   // Estado começa vazio e é carregado do cache local instantaneamente
   const [completedItems, setCompletedItems] = useState<Record<string, boolean>>({});
-  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(() => getFirstIncompleteDocumentId({}));
 
   const toggleExpanded = (id: string) => {
-    setExpandedItems(prev => ({ ...prev, [id]: !prev[id] }));
+    setExpandedItemId((currentId) => (currentId === id ? null : id));
   };
 
   // Salvar no cache local
@@ -68,7 +72,9 @@ export default function DocumentosScreen() {
       try {
         const cached = await AsyncStorage.getItem(CACHE_KEY);
         if (cached) {
-          setCompletedItems(JSON.parse(cached));
+          const cachedDocuments = JSON.parse(cached);
+          setCompletedItems(cachedDocuments);
+          setExpandedItemId(getFirstIncompleteDocumentId(cachedDocuments));
         }
       } catch (error) {
         console.error('Erro ao carregar cache:', error);
@@ -85,6 +91,7 @@ export default function DocumentosScreen() {
           const savedDocuments = docSnap.data().documents;
           if (savedDocuments) {
             setCompletedItems(savedDocuments);
+            setExpandedItemId(getFirstIncompleteDocumentId(savedDocuments));
             // Atualiza o cache com os dados do Firebase
             await saveToCache(savedDocuments);
           }
@@ -101,6 +108,7 @@ export default function DocumentosScreen() {
     const newCompleted = !completedItems[id];
     const newCompletedItems = { ...completedItems, [id]: newCompleted };
     setCompletedItems(newCompletedItems);
+    setExpandedItemId(newCompleted ? getFirstIncompleteDocumentId(newCompletedItems) : id);
     // Salva no cache local imediatamente
     await saveToCache(newCompletedItems);
     // Salva no Firebase automaticamente se usuário estiver logado
@@ -153,16 +161,33 @@ export default function DocumentosScreen() {
                 </View>
                 <View style={styles.moreDetailsButton}>
                   <Text style={styles.moreDetailsText}>
-                    {expandedItems[item.id] ? 'Menos' : 'Mais detalhes'}
+                    {expandedItemId === item.id ? 'Menos' : 'Mais detalhes'}
                   </Text>
                   <Text style={styles.chevron}>
-                    {expandedItems[item.id] ? '▲' : '▼'}
+                    {expandedItemId === item.id ? '▲' : '▼'}
                   </Text>
                 </View>
               </View>
-              {expandedItems[item.id] && (
+              {expandedItemId === item.id && (
                 <View style={styles.detailsContainer}>
                   <Text style={styles.detailsText}>{item.details}</Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.completeButton,
+                      completedItems[item.id] && styles.completeButtonCompleted,
+                    ]}
+                    onPress={() => toggleItem(item.id)}
+                    activeOpacity={0.85}
+                  >
+                    <Text
+                      style={[
+                        styles.completeButtonText,
+                        completedItems[item.id] && styles.completeButtonTextCompleted,
+                      ]}
+                    >
+                      {completedItems[item.id] ? 'Concluido' : 'Marcar como concluido'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               )}
             </TouchableOpacity>
@@ -290,5 +315,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4B5563',
     lineHeight: 20,
+  },
+  completeButton: {
+    alignSelf: 'flex-end',
+    marginTop: 14,
+    backgroundColor: 'rgb(40, 41, 42)',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+  },
+  completeButtonCompleted: {
+    backgroundColor: 'rgb(40, 41, 42)',
+  },
+  completeButtonText: {
+    color: '#F3F4F6',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  completeButtonTextCompleted: {
+    color: '#F3F4F6',
   },
 });
