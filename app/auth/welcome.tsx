@@ -17,6 +17,7 @@ export default function WelcomeScreen() {
 
   const cardsWidth = Math.min(width - 36, 372);
   const cardsHeight = cardsWidth * (314 / 372);
+  const bottomSafePadding = Math.max(insets.bottom + 30, 34);
 
   const handleAccessAccount = () => {
     router.push('/auth/login');
@@ -54,7 +55,7 @@ export default function WelcomeScreen() {
         </Text>
       </View>
 
-      <View style={[styles.bottomCard, { paddingBottom: insets.bottom || 30 }]}>
+      <View style={[styles.bottomCard, { paddingBottom: bottomSafePadding }]}>
         <Text style={styles.greeting}>Bem vindo</Text>
 
         <TouchableOpacity
