@@ -185,7 +185,7 @@ export default function DocumentosScreen() {
                         completedItems[item.id] && styles.completeButtonTextCompleted,
                       ]}
                     >
-                      {completedItems[item.id] ? 'Concluido' : 'Marcar como concluido'}
+                      {completedItems[item.id] ? 'Reverter' : 'Marcar como concluido'}
                     </Text>
                   </TouchableOpacity>
                 </View>
