@@ -5,69 +5,227 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Brasiguaios — conectando a comunidade brasileira com serviços e informações úteis."
+      content="Brasiguaios é o app para encontrar, avaliar e acompanhar prestadores de serviços indicados pela comunidade."
     />
-    <title>Brasiguaios</title>
+    <meta property="og:title" content="Brasiguaios - avaliações da comunidade" />
+    <meta
+      property="og:description"
+      content="Encontre prestadores por serviço, consulte avaliações reais e compartilhe sua experiência com a comunidade."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.brasiguaios.top/" />
+    <meta property="og:image" content="https://www.brasiguaios.top/assets/icon.png" />
+    <link rel="canonical" href="https://www.brasiguaios.top/" />
+    <link rel="icon" href="/assets/icon.png" />
     <link rel="stylesheet" href="/styles.css" />
+    <title>Brasiguaios - avaliações de prestadores de serviços</title>
   </head>
   <body>
     <a class="skip-link" href="#conteudo">Ir ao conteúdo</a>
+
     <header class="site-header">
       <div class="wrap header-inner">
-        <a class="logo" href="/">Brasiguaios</a>
+        <a class="logo" href="https://www.brasiguaios.top/" aria-label="Brasiguaios">
+          <img src="/assets/icon.png" alt="" width="32" height="32" />
+          <span>Brasiguaios</span>
+        </a>
         <nav class="nav" aria-label="Principal">
-          <a href="/support/">Suporte</a>
-          <a href="/privacy/">Privacidade</a>
+          <a href="#como-funciona">Como funciona</a>
+          <a href="#recursos">Recursos</a>
+          <a href="https://www.brasiguaios.top/support/">Suporte</a>
+          <a href="https://www.brasiguaios.top/privacy/">Privacidade</a>
         </nav>
       </div>
     </header>
+
     <main id="conteudo">
-      <div class="wrap">
-        <section class="hero">
-          <h1>Tudo em um só lugar para quem vive o dia a dia fora do Brasil</h1>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-media" aria-hidden="true">
+          <img src="/assets/cards_brasiguaios.png" alt="" />
+        </div>
+        <div class="wrap hero-content">
+          <p class="eyebrow">https://www.brasiguaios.top</p>
+          <h1 id="hero-title">Brasiguaios</h1>
           <p class="lead">
-            Brasiguaios reúne serviços e avaliações da comunidade para você
-            decidir com mais confiança.
+            Avaliações que ajudam você a encontrar prestadores de serviços com
+            mais confiança, usando a experiência compartilhada pela comunidade.
           </p>
           <div class="actions">
-            <a class="btn btn-primary" href="/support/">Falar com o suporte</a>
-            <a class="btn btn-outline" href="/privacy/">Política de privacidade</a>
+            <a class="btn btn-primary" href="https://www.brasiguaios.top/support/">Falar com suporte</a>
+            <a class="btn btn-outline" href="#politicas">Ver políticas</a>
           </div>
-        </section>
-        <section class="section" aria-labelledby="recursos-heading">
-          <h2 id="recursos-heading">Por que usar</h2>
-          <div class="grid grid-3">
-            <article class="card">
-              <h3>Serviços locais</h3>
-              <p>
-                Encontre referências úteis com base na experiência de quem já
-                passou pela mesma situação.
-              </p>
+        </div>
+      </section>
+
+      <section class="trust-band" aria-label="Resumo do app">
+        <div class="wrap trust-grid">
+          <div>
+            <strong>Busca por serviço</strong>
+            <span>Encontre opções por categoria, como eletricista, encanador e outros serviços locais.</span>
+          </div>
+          <div>
+            <strong>Avaliações reais</strong>
+            <span>Consulte notas, comentários e histórico de experiências da comunidade.</span>
+          </div>
+          <div>
+            <strong>Conta simples</strong>
+            <span>Crie, edite e acompanhe suas próprias avaliações pelo aplicativo.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="como-funciona" aria-labelledby="como-funciona-title">
+        <div class="wrap split">
+          <div class="section-copy">
+            <p class="eyebrow">Como funciona</p>
+            <h2 id="como-funciona-title">Uma decisão melhor começa com uma boa referência.</h2>
+            <p>
+              O Brasiguaios organiza avaliações de prestadores para que você veja
+              quem já foi atendido, qual serviço foi feito e como foi a experiência.
+            </p>
+          </div>
+          <div class="steps" aria-label="Etapas">
+            <article class="step">
+              <span>1</span>
+              <h3>Pesquise o serviço</h3>
+              <p>Selecione o tipo de serviço que precisa e veja prestadores avaliados.</p>
             </article>
-            <article class="card">
-              <h3>Avaliações da comunidade</h3>
-              <p>
-                Compartilhe e consulte avaliações para tomar decisões mais
-                seguras no dia a dia.
-              </p>
+            <article class="step">
+              <span>2</span>
+              <h3>Compare avaliações</h3>
+              <p>Confira notas, comentários e informações de contato antes de decidir.</p>
             </article>
-            <article class="card">
-              <h3>Conta simples</h3>
-              <p>
-                Acesse suas informações onde estiver pelo app brasiguaios.
-              </p>
+            <article class="step">
+              <span>3</span>
+              <h3>Compartilhe sua experiência</h3>
+              <p>Depois do atendimento, publique uma avaliação para ajudar outras pessoas.</p>
             </article>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
+
+      <section class="section app-preview" id="recursos" aria-labelledby="recursos-title">
+        <div class="wrap preview-grid">
+          <div class="phone-frame" aria-label="Prévia visual do app Brasiguaios">
+            <div class="phone-screen">
+              <img class="brand-preview" src="/assets/brand.png" alt="Brasiguaios" />
+              <img class="cards-preview" src="/assets/cards_brasiguaios.png" alt="Cartões de avaliações do app Brasiguaios" />
+              <div class="mini-panel">
+                <strong>Buscar por Serviço</strong>
+                <span>Prestadores avaliados pela comunidade</span>
+              </div>
+            </div>
+          </div>
+          <div class="section-copy">
+            <p class="eyebrow">Recursos</p>
+            <h2 id="recursos-title">Feito para consultar rápido e avaliar com responsabilidade.</h2>
+            <div class="feature-list">
+              <article>
+                <h3>Prestadores por categoria</h3>
+                <p>Busque por tipo de serviço e veja resultados ordenados por avaliações.</p>
+              </article>
+              <article>
+                <h3>Histórico das suas avaliações</h3>
+                <p>Acompanhe o que você publicou, edite informações e mantenha tudo atualizado.</p>
+              </article>
+              <article>
+                <h3>Denúncia e moderação</h3>
+                <p>Conteúdos inadequados podem ser reportados para preservar a qualidade da comunidade.</p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section policy-section" id="politicas" aria-labelledby="politicas-title">
+        <div class="wrap">
+          <div class="section-heading">
+            <p class="eyebrow">Transparência</p>
+            <h2 id="politicas-title">Políticas e canais oficiais</h2>
+            <p>
+              As páginas abaixo usam o domínio oficial do projeto e concentram
+              informações sobre privacidade, uso e suporte.
+            </p>
+          </div>
+          <div class="policy-grid">
+            <a class="policy-card" href="https://www.brasiguaios.top/privacy/">
+              <span>Privacidade</span>
+              <strong>Política de privacidade</strong>
+              <small>Como dados podem ser coletados, usados e protegidos no app.</small>
+            </a>
+            <a class="policy-card" href="https://www.brasiguaios.top/terms/">
+              <span>Uso</span>
+              <strong>Termos de uso</strong>
+              <small>Regras básicas para usar o Brasiguaios e publicar avaliações.</small>
+            </a>
+            <a class="policy-card" href="https://www.brasiguaios.top/support/">
+              <span>Ajuda</span>
+              <strong>Suporte</strong>
+              <small>Contato para dúvidas, problemas de conta e solicitações.</small>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section faq" aria-labelledby="faq-title">
+        <div class="wrap">
+          <div class="section-heading">
+            <p class="eyebrow">Dúvidas comuns</p>
+            <h2 id="faq-title">Perguntas frequentes</h2>
+          </div>
+          <div class="faq-list">
+            <details>
+              <summary>O Brasiguaios indica prestadores diretamente?</summary>
+              <p>
+                O app organiza avaliações publicadas pela comunidade. A decisão
+                de contratar e validar informações do prestador continua sendo do usuário.
+              </p>
+            </details>
+            <details>
+              <summary>Posso alterar uma avaliação depois?</summary>
+              <p>
+                Sim. O app tem uma área para acompanhar e editar avaliações feitas pela sua conta.
+              </p>
+            </details>
+            <details>
+              <summary>Onde encontro suporte e políticas?</summary>
+              <p>
+                Use os links oficiais em
+                <a href="https://www.brasiguaios.top/support/">Suporte</a>,
+                <a href="https://www.brasiguaios.top/privacy/">Privacidade</a> e
+                <a href="https://www.brasiguaios.top/terms/">Termos de uso</a>.
+              </p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="final-cta" aria-labelledby="cta-title">
+        <div class="wrap">
+          <h2 id="cta-title">Use referências melhores antes de escolher um serviço.</h2>
+          <p>Acesse os canais oficiais do Brasiguaios pelo domínio https://www.brasiguaios.top.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="https://www.brasiguaios.top/support/">Entrar em contato</a>
+            <a class="btn btn-outline" href="https://www.brasiguaios.top/privacy/">Ler privacidade</a>
+          </div>
+        </div>
+      </section>
     </main>
+
     <footer class="site-footer">
-      <div class="wrap">
+      <div class="wrap footer-grid">
+        <div>
+          <a class="logo footer-logo" href="https://www.brasiguaios.top/">
+            <img src="/assets/icon.png" alt="" width="32" height="32" />
+            <span>Brasiguaios</span>
+          </a>
+          <p>© brasiguaios. Todos os direitos reservados.</p>
+        </div>
         <nav class="footer-nav" aria-label="Rodapé">
-          <a href="/support/">Suporte</a>
-          <a href="/privacy/">Privacidade</a>
+          <a href="https://www.brasiguaios.top/support/">Suporte</a>
+          <a href="https://www.brasiguaios.top/privacy/">Privacidade</a>
+          <a href="https://www.brasiguaios.top/terms/">Termos de uso</a>
         </nav>
-        <p>© brasiguaios. Todos os direitos reservados.</p>
       </div>
     </footer>
   </body>
