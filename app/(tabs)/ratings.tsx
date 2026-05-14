@@ -142,6 +142,9 @@ export default function RatingsScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Minhas avaliações</Text>
         <Text style={styles.headerSubtitle}>
+          Crie, acompanhe ou edite suas avaliações de prestadores de serviços.
+        </Text>
+        <Text style={styles.headerCount}>
           {ratings.length} {ratings.length === 1 ? 'avaliação feita' : 'avaliações feitas'}
         </Text>
       </View>
@@ -249,6 +252,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#6B7280',
     marginTop: 4,
+    lineHeight: 21,
+  },
+  headerCount: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    marginTop: 6,
   },
   listContent: {
     paddingHorizontal: 24,
