@@ -226,7 +226,7 @@ export default function RatingFormScreen() {
     const newErrors: typeof errors = {};
 
     if (!whatsapp || whatsapp.length < 10) {
-      newErrors.whatsapp = 'Digite um número de WhatsApp válido.';
+      newErrors.whatsapp = 'Digite um número de telefone válido.';
     }
 
     if (!prestadorNome.trim()) {
@@ -326,12 +326,12 @@ export default function RatingFormScreen() {
         >
         {/* Formulário */}
         <View style={styles.form}>
-          {/* WhatsApp do prestador */}
+          {/* Telefone do prestador */}
           <WhatsappInput
             ref={whatsappRef}
             value={whatsapp}
             onChangeValue={setWhatsapp}
-            label="WhatsApp do prestador"
+            label="Telefone do prestador"
             readonly={isEditing}
             error={errors.whatsapp}
             onFocusWithPosition={handleInputFocus}

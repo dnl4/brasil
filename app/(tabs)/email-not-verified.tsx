@@ -1,6 +1,7 @@
 import { CustomDialog } from '@/components/ui/custom-dialog';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { useSnackbar } from '@/components/ui/snackbar';
+import { shouldSkipWhatsappVerification } from '@/constants/verification';
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/firebaseConfig';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EmailNotVerifiedScreen() {
   const { refreshUser } = useAuth();
+  const skipWhatsappVerification = shouldSkipWhatsappVerification();
   
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -103,12 +105,18 @@ export default function EmailNotVerifiedScreen() {
           <View style={[styles.stepDot, styles.stepActive]}>
             <Text style={styles.stepNumber}>1</Text>
           </View>
-          <View style={styles.stepLine} />
-          <View style={styles.stepDot}>
-            <Text style={styles.stepNumberInactive}>2</Text>
-          </View>
+          {!skipWhatsappVerification && (
+            <>
+              <View style={styles.stepLine} />
+              <View style={styles.stepDot}>
+                <Text style={styles.stepNumberInactive}>2</Text>
+              </View>
+            </>
+          )}
         </View>
-        <Text style={styles.stepText}>Passo 1 de 2</Text>
+        <Text style={styles.stepText}>
+          {skipWhatsappVerification ? 'Passo 1 de 1' : 'Passo 1 de 2'}
+        </Text>
       </View>
 
       <View style={styles.content}>
@@ -149,11 +157,15 @@ export default function EmailNotVerifiedScreen() {
       <CustomDialog
         visible={showSuccessDialog}
         title="E-mail verificado!"
-        message="Seu e-mail foi verificado com sucesso. Agora vamos verificar seu WhatsApp."
+        message={
+          skipWhatsappVerification
+            ? 'Seu e-mail foi verificado com sucesso. Sua conta esta pronta para uso.'
+            : 'Seu e-mail foi verificado com sucesso. Agora vamos verificar seu WhatsApp.'
+        }
         buttons={[{ text: 'Continuar' }]}
         onClose={() => {
           setShowSuccessDialog(false);
-          router.push('/(tabs)/whatsapp-not-verified');
+          router.replace(skipWhatsappVerification ? '/(tabs)/services' : '/(tabs)/whatsapp-not-verified');
         }}
       />
     </SafeAreaView>

@@ -36,7 +36,7 @@ export interface WhatsappInputRef {
 export const WhatsappInput = forwardRef<WhatsappInputRef, WhatsappInputProps>(({
   value,
   onChangeValue,
-  label = 'WhatsApp',
+  label = 'Telefone',
   placeholder,
   readonly = false,
   error,
@@ -185,6 +185,12 @@ export const WhatsappInput = forwardRef<WhatsappInputRef, WhatsappInputProps>(({
 
   const effectivePlaceholder = placeholder || selectedCountry.placeholder;
 
+  const focusInput = useCallback(() => {
+    if (!readonly) {
+      inputRef.current?.focus();
+    }
+  }, [readonly]);
+
   const handleInputFocus = useCallback(() => {
     if (!onFocusWithPosition) {
       return;
@@ -202,7 +208,11 @@ export const WhatsappInput = forwardRef<WhatsappInputRef, WhatsappInputProps>(({
 
   return (
     <View ref={containerRef} style={styles.container}>
-      {label && <Text style={[styles.label, isDark && styles.labelDark]}>{label}</Text>}
+      {label && (
+        <Text style={[styles.label, isDark && styles.labelDark]} onPress={focusInput}>
+          {label}
+        </Text>
+      )}
       
       <View style={[
         styles.inputContainer,
@@ -226,22 +236,29 @@ export const WhatsappInput = forwardRef<WhatsappInputRef, WhatsappInputProps>(({
         <View style={[styles.separator, isDark && styles.separatorDark]} />
 
         {/* Input do número */}
-        <TextInput
-          ref={inputRef}
-          testID={testID}
-          style={[styles.input, isDark && styles.inputDark]}
-          value={localValue}
-          onChangeText={handleTextChange}
-          placeholder={effectivePlaceholder}
-          placeholderTextColor={isDark ? '#666' : '#9CA3AF'}
-          keyboardType="phone-pad"
-          editable={!readonly}
-          onFocus={handleInputFocus}
-          onKeyPress={(e) => handleKeyPress(e.nativeEvent.key)}
-          returnKeyType={returnKeyType}
-          blurOnSubmit={blurOnSubmit}
-          onSubmitEditing={onSubmitEditing}
-        />
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.inputTouchTarget}
+          onPress={focusInput}
+          disabled={readonly}
+        >
+          <TextInput
+            ref={inputRef}
+            testID={testID}
+            style={[styles.input, isDark && styles.inputDark]}
+            value={localValue}
+            onChangeText={handleTextChange}
+            placeholder={effectivePlaceholder}
+            placeholderTextColor={isDark ? '#666' : '#9CA3AF'}
+            keyboardType="phone-pad"
+            editable={!readonly}
+            onFocus={handleInputFocus}
+            onKeyPress={(e) => handleKeyPress(e.nativeEvent.key)}
+            returnKeyType={returnKeyType}
+            blurOnSubmit={blurOnSubmit}
+            onSubmitEditing={onSubmitEditing}
+          />
+        </TouchableOpacity>
       </View>
 
       {error && <Text style={styles.errorText}>{error}</Text>}
@@ -371,9 +388,15 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    height: '100%',
     fontSize: 16,
     color: '#1F2937',
     paddingVertical: 0,
+  },
+  inputTouchTarget: {
+    flex: 1,
+    height: '100%',
+    justifyContent: 'center',
   },
   inputDark: {
     color: '#F9FAFB',

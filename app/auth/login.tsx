@@ -191,6 +191,7 @@ export default function LoginScreen() {
     setShowSuccessDialog(false);
     // Libera o redirect quando fechar o dialog
     setHoldRedirect(false);
+    router.replace('/(tabs)/services');
   };
 
   const handleForgotPassword = () => {

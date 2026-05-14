@@ -1,6 +1,7 @@
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState } from 'react';
+import { shouldSkipWhatsappVerification } from '../constants/verification';
 import { auth, db } from '../firebaseConfig';
 import { UserProfile } from '../services/user-service';
 
@@ -86,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const user: AppUser | null = authUser
     ? Object.assign(Object.create(Object.getPrototypeOf(authUser)), authUser, {
-        phoneNumberVerified: profile?.phoneNumberVerified ?? false,
+        phoneNumberVerified: shouldSkipWhatsappVerification() || (profile?.phoneNumberVerified ?? false),
         profile,
       })
     : null;

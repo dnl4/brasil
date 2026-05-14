@@ -20,6 +20,7 @@ import { InputField, type InputFieldRef } from '../../components/ui/input-field'
 import { PrimaryButton } from '../../components/ui/primary-button';
 import { useSnackbar } from '../../components/ui/snackbar';
 import { WhatsappInput, type WhatsappInputRef } from '../../components/ui/whatsapp-input';
+import { shouldSkipWhatsappVerification } from '../../constants/verification';
 import { auth } from '../../firebaseConfig';
 import { isDisplayNameAvailable, isPhoneNumberAvailable, updateUserProfile, validateDisplayNameFormat } from '../../services/user-service';
 
@@ -216,7 +217,7 @@ export default function RegisterScreen() {
         displayName: normalizedDisplayName,
         fullName: fullName.trim(),
         phoneNumber: phone.trim(),
-        ...(process.env.EXPO_PUBLIC_SKIP_WHATSAPP_VERIFICATION === 'true' && { phoneNumberVerified: true }),
+        ...(shouldSkipWhatsappVerification() && { phoneNumberVerified: true }),
       });
 
       // Registro bem-sucedido, mostrar dialog de sucesso
@@ -392,7 +393,7 @@ export default function RegisterScreen() {
               text: 'Continuar',
               onPress: () => {
                 setShowSuccessDialog(false);
-                router.replace('/(tabs)');
+                router.replace('/(tabs)/services');
               },
             },
           ]}
