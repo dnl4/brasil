@@ -1,5 +1,5 @@
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react-native';
+import { HugeiconsIcon } from '@/components/ui/hugeicons-icon';
 import React, { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -223,4 +223,3 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 });
-

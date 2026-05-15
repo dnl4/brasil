@@ -1,5 +1,5 @@
 import { FileAttachmentIcon, StarIcon, UserIcon, UserSearch01Icon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react-native';
+import { HugeiconsIcon } from '@/components/ui/hugeicons-icon';
 import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
 
@@ -9,6 +9,10 @@ import { useAuth } from '@/contexts/auth-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EmailNotVerifiedScreen from './email-not-verified';
 import WhatsappNotVerifiedScreen from './whatsapp-not-verified';
+
+function TabBarIcon({ icon, color }: { icon: React.ComponentProps<typeof HugeiconsIcon>['icon']; color: string }) {
+  return <HugeiconsIcon icon={icon} size={24} color={color} />;
+}
 
 export default function TabLayout() {
   const activeColor = '#0066FF';
@@ -67,7 +71,7 @@ export default function TabLayout() {
         name="services"
         options={{
           title: 'Serviços',
-          tabBarIcon: ({ color }) => <HugeiconsIcon icon={UserSearch01Icon} size={24} color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon icon={UserSearch01Icon} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -92,21 +96,21 @@ export default function TabLayout() {
         name="ratings"
         options={{
           title: 'Minhas avaliações',
-          tabBarIcon: ({ color }) => <HugeiconsIcon icon={StarIcon} size={24} color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon icon={StarIcon} color={color} />,
         }}
       />
       <Tabs.Screen
         name="documentos"
         options={{
           title: 'Documentos',
-          tabBarIcon: ({ color }) => <HugeiconsIcon icon={FileAttachmentIcon} size={24} color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon icon={FileAttachmentIcon} color={color} />,
         }}
       />
       <Tabs.Screen
         name="(profile)"
         options={{
           title: 'Meu perfil',
-          tabBarIcon: ({ color }) => <HugeiconsIcon icon={UserIcon} size={24} color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon icon={UserIcon} color={color} />,
         }}
       />
     </Tabs>

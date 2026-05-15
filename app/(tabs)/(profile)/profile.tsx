@@ -7,7 +7,7 @@ import {
   Settings01FreeIcons,
   UserIcon,
 } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react-native';
+import { HugeiconsIcon } from '@/components/ui/hugeicons-icon';
 import { useRouter } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import React from 'react';

@@ -2,7 +2,7 @@ import {
   Mail01Icon,
   UserIcon
 } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react-native';
+import { HugeiconsIcon } from '@/components/ui/hugeicons-icon';
 import { signOut, updateProfile, verifyBeforeUpdateEmail } from 'firebase/auth';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {

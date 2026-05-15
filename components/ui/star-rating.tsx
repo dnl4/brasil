@@ -1,5 +1,5 @@
 import { StarIcon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react-native';
+import { HugeiconsIcon } from '@/components/ui/hugeicons-icon';
 import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';

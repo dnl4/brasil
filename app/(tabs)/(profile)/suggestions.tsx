@@ -1,5 +1,5 @@
 import { Add01Icon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react-native';
+import { HugeiconsIcon } from '@/components/ui/hugeicons-icon';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -190,4 +190,3 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 });
-

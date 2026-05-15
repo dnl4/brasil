@@ -1,5 +1,5 @@
 import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react-native';
+import { HugeiconsIcon } from '@/components/ui/hugeicons-icon';
 import React, { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
 import {
     Modal,
@@ -228,7 +228,11 @@ export const WhatsappInput = forwardRef<WhatsappInputRef, WhatsappInputProps>(({
           <Text style={styles.flag}>{selectedCountry.flag}</Text>
           <Text style={[styles.dialCode, isDark && styles.dialCodeDark]}>{selectedCountry.dialCode}</Text>
           {!readonly && (
-            <HugeiconsIcon icon={ArrowDown01Icon} size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
+            <HugeiconsIcon
+              icon={ArrowDown01Icon}
+              size={16}
+              color={isDark ? '#9CA3AF' : '#6B7280'}
+            />
           )}
         </TouchableOpacity>
 

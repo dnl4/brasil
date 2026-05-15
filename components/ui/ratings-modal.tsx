@@ -1,5 +1,5 @@
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react-native';
+import { HugeiconsIcon } from '@/components/ui/hugeicons-icon';
 import React from 'react';
 import {
   FlatList,
@@ -147,4 +147,3 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
 });
-

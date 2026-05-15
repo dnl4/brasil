@@ -1,5 +1,5 @@
 import { Search01Icon, StarIcon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react-native';
+import { HugeiconsIcon } from '@/components/ui/hugeicons-icon';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -530,4 +530,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
