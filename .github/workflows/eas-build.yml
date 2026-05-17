@@ -2,8 +2,10 @@ name: EAS Build Produção
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - android
+      - ios
+      - build
 
 jobs:
   build:
@@ -29,10 +31,22 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Definir plataforma
+        id: platform
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          if [ "$TAG" = "android" ]; then
+            echo "platform=android" >> $GITHUB_OUTPUT
+          elif [ "$TAG" = "ios" ]; then
+            echo "platform=ios" >> $GITHUB_OUTPUT
+          else
+            echo "platform=all" >> $GITHUB_OUTPUT
+          fi
+
       - name: Rodar build na EAS
         run: |
           eas build \
-            --platform android \
+            --platform ${{ steps.platform.outputs.platform }} \
             --profile production \
             --auto-submit \
             --non-interactive \

@@ -1,5 +1,5 @@
 import { db } from '@/firebaseConfig';
-import { collection, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
 
 export interface UserProfile {
   userId: string;
@@ -147,5 +147,13 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
   }
 
   return null;
+}
+
+/**
+ * Exclui o perfil do usuário do Firestore
+ */
+export async function deleteUserProfile(userId: string): Promise<void> {
+  const docRef = doc(db, USERS_COLLECTION, userId);
+  await deleteDoc(docRef);
 }
 

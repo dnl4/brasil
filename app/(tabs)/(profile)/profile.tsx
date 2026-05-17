@@ -1,6 +1,7 @@
 
 import {
   ArrowRight01Icon,
+  Delete02Icon,
   Idea01Icon,
   LockPasswordIcon,
   Logout01Icon,
@@ -252,6 +253,14 @@ export default function ProfileScreen() {
             icon={Logout01Icon}
             label="Sair da conta"
             onPress={handleLogoutPress}
+            danger
+            showDivider
+            fullWidthDivider
+          />
+          <MenuItem
+            icon={Delete02Icon}
+            label="Excluir conta"
+            onPress={() => router.push('/(tabs)/(profile)/delete-account')}
             danger
             showDivider={false}
           />

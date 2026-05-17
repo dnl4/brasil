@@ -40,6 +40,18 @@ export default function ProfileLayout() {
         }}
       />
       <Stack.Screen
+        name="delete-account"
+        options={{
+          headerShown: true,
+          title: 'Excluir conta',
+          headerStyle: {
+            backgroundColor: colors.background,
+          },
+          headerTintColor: colors.text,
+          headerShadowVisible: false,
+        }}
+      />
+      <Stack.Screen
         name="suggestions"
         options={{
           headerShown: true,
